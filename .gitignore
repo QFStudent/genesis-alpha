@@ -1,3 +1,7 @@
 # do not track sample data
 sample_data 
 
+# do not track .DS_Store
+.DS_Store
+
+
