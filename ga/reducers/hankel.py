@@ -107,3 +107,48 @@ def info_svd_reduce(h: np.ndarray, order: int, rho: float) -> np.ndarray:
     a = toeplog(h_)
     lambd = reduce_svd_truncate(a[1:], order) / rho
     return lambd
+
+
+def blkhankel(ir: np.ndarray): 
+    """
+    Construct block hankel matrix from given 
+    impulse response. 
+    """
+    di, do, l = ir.shape 
+    k = int(np.floor((l + 1) / 2))
+    H = np.zeros((di*k, do*k))
+    for i in range(k): 
+        for j in range(k): 
+            H[i*di:(i+1)*di, j*do:(j+1)*do] = ir[:, :, i+j]
+    return H 
+
+
+def lschur(A: np.ndarray): 
+    # Shur triangularization and convert A to lower 
+    T, Z = la.schur(A, output='real')
+    L = T[::-1, ::-1]
+    Q = Z[:, ::-1]
+    return L, Q 
+
+
+def msvdreduce(ir: np.ndarray, order: int): 
+    do, di, num_ir = ir.shape 
+    H = blkhankel(ir)
+
+    U, S, Vh = la.svd(H)    # U.dot(S).dot(VT)
+    Vh = Vh[:order, :]      # order reduction by truncation 
+    A = Vh[:, di:].dot(Vh.T[:-di, :])
+
+    A, Q = lschur(A)
+    B = Q.T.dot(Vh[:, :di])
+    w = np.diag(A)
+    u = np.zeros((di, order, 1))
+
+    for i in range(order): 
+        ui = (B[0] / np.linalg.norm(B[0], ord=2)).reshape(-1, 1)
+        u[:, i] = ui 
+        tmp = np.eye(di) - (1 + np.conj(w[i]))*ui.dot(ui.T)
+        B = B[1:, :]
+    return w, u[:, :, 0]
+
+

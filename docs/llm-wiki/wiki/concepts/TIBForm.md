@@ -30,7 +30,7 @@ TIB is the core representation in `ga/filters/tib.py` and drives the entire mode
 
 1. **Interpretability**: Each TIB state corresponds to a specific *temporal decay rate* (ωₖ) and *input direction* (yₖ). You can say "this state models long-memory market impact driven by input channel 2" — impossible in a generic realization.
 2. **Numerical stability**: The bidiagonal sparse structure of M, N avoids ill-conditioning from direct pole multiplication.
-3. **Reduction compatibility**: The TIB form is the target representation for `msvdreduce` and `extract_poles_and_nullvecs_from_bt` — reduced systems feed back into TIB for online filtering.
+3. **Reduction compatibility**: The TIB form is the target representation for `msvdreduce` and `extract_poles_and_nullvecs_from_bt` — reduced systems feed back into TIB for online filtering. `extract_poles_and_nullvecs_from_bt` produces **approximate** null vectors because BT output doesn't provide exact null basis pairs; the TIB condition AₖAₖ* + BₖBₖ* = I is only guaranteed when exact pairs are used (see [[papers/Mu2026-NullBasisProofs]]).
 4. **Execution simulator**: The `ir()` function computes the impulse response via the Krylov basis, directly usable in `execution/simulator/` for market impact simulation.
 
 ## Empirical Findings

@@ -138,7 +138,137 @@ def null_basis_realization(lambd: NDArray[complex],
         A: system matrix. 
         B: input matrix. 
     """
-    pass 
+    lambd = np.asarray(lambd, dtype=complex).reshape(-1)
+    n = len(lambd)
+
+    v = np.asarray(v, dtype=complex)
+    if v.ndim != 2 or v.shape[1] != n: 
+        raise ValueError(f"v must have shape (m, n). Got {v.shape}, n={n}.")
+    m = v.shape[0]
+
+    # Sanity checks 
+    if np.any(np.abs(lambd) >= 1.0 + 1e-12):
+        raise ValueError("Poles must be inside the unit circle.")
+    for k in range(n):
+        if np.linalg.norm(v[:, k]) < 1e-12: 
+            raise ValueError(f"Null vector {k} is zero.")
+    
+    # Storage 
+    ys = np.zeros((m, n, 1), dtype=complex)
+    Js = [] 
+
+    # Initialize k = 1 
+    y1 = normalize(v[:, 0].reshape(-1, 1))
+    ys[:, 0] = y1 
+    t = np.sqrt(max(0.0, 1.0 - np.abs(lambd[0])**2))
+    A = np.array([[lambd[0]]], dtype=complex)         # (1, 1)
+    B = t * v[:, 0].conj().T.reshape(1, -1)
+    L = np.zeros((m, 0), dtype=complex)          
+    P = np.eye(m, dtype=complex)
+
+    # Define J_1 (needed starting at k = 2)
+    J1 = np.eye(m, dtype=complex) - (1.0 + np.conj(lambd[0])) * y1 @ y1.conj().T
+    Js.append(J1)
+
+    A_list = [A.copy()]
+    B_list = [B.copy()]
+
+    # Iterate k = 2, ..., n
+    for k in range(1, n): 
+        L = np.hstack([Js[k-1] @ L, t * ys[:, k-1]])
+        t = np.sqrt(max(0.0, 1.0 - np.abs(lambd[k])**2))
+
+        # for every pole lambd[k], we need to build the matrix M_k = Π_{i=1}^{k-1} β_{λ_i, y_i}{λ_k^*}
+        z = np.conj(lambd[k])
+        M = np.eye(m, dtype=complex)
+        for i in range(0, k): 
+            beta = blaschke_potapov_factor(z, lambd[i], ys[:, i])
+            M = M @ beta.conj().T 
+        ys[:, k] = normalize(M @ v[:, k].reshape(-1, 1))
+        Jk = np.eye(m, dtype=complex) - (1.0 + np.conj(lambd[k])) * ys[:, k] @ ys[:, k].conj().T
+        Js.append(Jk)
+
+        # Update product P_k = J_{k-1} ... J_1 (for this k, we need P = J_{k-1}...J_1)
+        P = Js[k-1] @ P 
+
+        # sanity check 
+        tmp = ys[:, k].conj().T @ (L @ L.conj().T + P @ P.conj().T) @ ys[:, k]
+        assert np.abs(np.linalg.norm(tmp) - 1) < 1e-10, "Sanity check failed."
+
+        # Build A_k and B_k 
+        # Bottom-left row: t_k y_k^* L_k (1 x (k-1))
+        a_row = (t * np.conj(ys[:, k]).reshape(1, m)) @ L    # (1, k-1)
+        # New B row: t_k y_k^* P (1 x m)
+        b_row = (t * np.conj(ys[:, k]).reshape(1, m)) @ P    # (1, m)
+
+        # Expand A and B 
+        A_new = np.zeros((k+1, k+1), dtype=complex)
+        A_new[:-1, :-1] = A 
+        A_new[-1, :-1] = a_row 
+        A_new[-1, -1] = lambd[k]
+        A = A_new 
+
+        B = np.vstack([B, b_row])
+
+        A_list.append(A.copy())
+        B_list.append(B)
+
+    A = _real_if_close_ndarray(A)
+    B = _real_if_close_ndarray(B)
+    return TIBStateSpace(A_=A, B_=B)
 
 
+def krylov_basis(A: np.ndarray, B: np.ndarray, n: int) -> NDArray[complex]:
+    """
+    Use the naive method to generate the Krylov basis. 
+    """
+    if hasattr(A, 'toarray'): 
+        A = A.toarray() 
+    else: 
+        A = np.asarray(A)
+    if hasattr(B, 'toarray'): 
+        B = B.toarray() 
+    else: 
+        B = np.asarray(B)
+
+    if B.ndim < 2: 
+        B = B.reshape((-1, 1))
+    
+    nCol = int(2**np.ceil(np.log2(n)))
+    p, q = B.shape 
+    K = np.empty((p, q * nCol), dtype=A.dtype)
+    K[:, :q] = B 
+
+    width = q 
+    while width < K.shape[1]: 
+        newCols = np.arange(width, 2 * width)
+        K[:, newCols] = A @ K[:, :width]
+        width = 2 * width 
+        A = A @ A 
+    
+    K = K[:, :q * n]
+    if q > 1: 
+        K = K.reshape((p, q, n), order='F')
+    
+    return K 
+
+
+def mimo_poles_to_ir(lambd: NDArray[complex], v: NDArray[complex], C: NDArray[float], m: int) -> NDArray[float]:
+    """
+    Convert poles to impulse response. 
+
+    Parameters: 
+        lambd: poles of the system. 
+        v: null basis of the system. shape (m, n) where n is the number of poles and m is the number of inputs
+        C: output matrix. shape (p, m) where p is the number of outputs and m is the number of inputs
+        m: number of inputs
+
+    Returns: 
+        ir: impulse response. shape (p, m, n) where p is the number of outputs and n is the number of poles
+    """
+    n = len(lambd)
+    tib_sys = null_basis_realization(lambd, v)
+    K = krylov_basis(tib_sys.A(), tib_sys.B(), m)
+    ir = np.tensordot(C, K, (-1, 0))
+    return ir 
 

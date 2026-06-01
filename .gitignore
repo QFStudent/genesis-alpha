@@ -8,5 +8,10 @@ sample_data
 __pycache__/
 *.pyc
 *.egg-info/
+.ipynb_checkpoints/
+
+# Obsidian editor state
+.obsidian/
+Untitled.canvas
 
 

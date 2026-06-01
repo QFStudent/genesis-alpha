@@ -8,6 +8,17 @@ Quick tail: `grep "^## \[" log.md | tail -10`
 
 ## [2026-05-14] init | Wiki initialized — CLAUDE.md schema, index.md, log.md, wiki/ directory structure created
 
+## [2026-06-01] update | Completed Mu2026-NullBasisProofs.md — full inductive proof derived
+- Proved Lemma B: LₖLₖ* + PₖPₖ* = Iₘ (induction using JₖJₖ* = I − tₖ²yₖyₖ*)
+- Proved Lemma A: A_{k−1}Lₖ* + B_{k−1}Pₖ* = 0 (induction using Lemma B and Jₖ* + ωₖI = (1+ωₖ)(I − yₖyₖ*))
+- Completed inductive step: off-diagonal = 0 via Lemma A; diagonal = 1 via Lemma B
+- Key insight: TIB condition requires only ‖yₖ‖ = 1, not the full Blaschke-Potapov construction
+
+## [2026-06-01] ingest | null_basis_rep_proofs.pdf (raw/) — Mu 2026 proof of Theorem 6.5.1
+- Created wiki/papers/Mu2026-NullBasisProofs.md
+- Updated TIBForm.md: clarified why extract_poles_and_nullvecs_from_bt produces approximations
+- Updated index.md: 9 pages, 3 sources ingested
+
 ## [2026-06-01] update | Fixed lint issues: bugs (#1-3) and missing pages (#4-5)
 - Fixed MarketImpact.md sources frontmatter and updated date
 - Resolved H₂/Hankel norm inconsistency in TIBForm and ModelReduction

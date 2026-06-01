@@ -2,7 +2,7 @@
 
 *The LLM updates this on every ingest. Read this first before answering any query — use it to find relevant pages, then drill in.*
 
-Last updated: 2026-06-01 | Pages: 8 | Sources ingested: 2
+Last updated: 2026-06-01 | Pages: 9 | Sources ingested: 3
 
 ---
 
@@ -11,6 +11,7 @@ Last updated: 2026-06-01 | Pages: 8 | Sources ingested: 2
 - [[wiki/papers/Kong2018-TIBInfoGeometry|Kong 2018 — TIB & Info Geometry]] — PhD dissertation; TIB form derivation, MIMO information geometry, null-basis reduction, fast Toeplitz algorithms
 - [[wiki/papers/Mu2026-ModelReductionNotes|Mu 2026 — Model Reduction Notes]] — Internal notes; BT square-root algorithm, biorthogonality/balanced-Grammian proofs, sanity checks
 - [[wiki/papers/MullhauptRiedel2003-TIBBandMatrix|Mullhaupt & Riedel 2003 — TIB Band Matrix]] — ⚠️ stub; originating reference for bidiagonal M, N construction in tib.py; paper not yet ingested
+- [[wiki/papers/Mu2026-NullBasisProofs|Mu 2026 — Null Basis Realization Proofs]] — inductive proof that null basis algorithm generates TIB matrices; confirms correctness of mimo_null_basis() and explains BT approximation gap
 
 ---
 
