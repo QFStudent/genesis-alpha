@@ -11,7 +11,7 @@ class TIBStateSpace:
     B_: np.ndarray
 
     def __str__(self): 
-        return f"TIBStateSpace({}, {})".format(self.p, self.q)
+        return "TIBStateSpace({}, {})".format(self.p, self.q)
     
     @property
     def p(self): 
@@ -92,7 +92,7 @@ def blaschke_potapov_factor(w: complex, z: complex, u: np.ndarray) -> np.ndarray
     returns m×m vector
     """
     u = u.reshape(-1, 1)
-    if np.linalg.norm(u) < 1 - 1e-12: 
+    if abs(np.linalg.norm(u) - 1.0) > 1e-9:
         raise ValueError("u is not a unit vector")
     b = blaschke_factor(w, z) - 1
     return np.eye(u.shape[0], dtype=complex) + b * (u @ u.conj().T) 
@@ -124,9 +124,9 @@ def _real_if_close_ndarray(A: np.ndarray, tol: float = 1e-12) -> np.ndarray:
     return A 
 
 
-def null_basis_realization(lambd: NDArray[complex], 
-                           v: NDArray[complex], 
-                           return_all: bool = False) -> tuple[NDArray[complex], NDArray[complex]]: 
+def null_basis_realization(lambd: NDArray[complex],
+                           v: NDArray[complex],
+                           return_all: bool = False) -> "TIBStateSpace":
     """
     Null basis realization of a MIMO system. 
     
@@ -162,7 +162,7 @@ def null_basis_realization(lambd: NDArray[complex],
     ys[:, 0] = y1 
     t = np.sqrt(max(0.0, 1.0 - np.abs(lambd[0])**2))
     A = np.array([[lambd[0]]], dtype=complex)         # (1, 1)
-    B = t * v[:, 0].conj().T.reshape(1, -1)
+    B = t * y1.conj().reshape(1, -1)         # B_1 = t_1 y_1* (y_1 normalized)
     L = np.zeros((m, 0), dtype=complex)          
     P = np.eye(m, dtype=complex)
 
@@ -181,9 +181,9 @@ def null_basis_realization(lambd: NDArray[complex],
         # for every pole lambd[k], we need to build the matrix M_k = Π_{i=1}^{k-1} β_{λ_i, y_i}{λ_k^*}
         z = np.conj(lambd[k])
         M = np.eye(m, dtype=complex)
-        for i in range(0, k): 
-            beta = blaschke_potapov_factor(z, lambd[i], ys[:, i])
-            M = M @ beta.conj().T 
+        for i in range(0, k):
+            beta = blaschke_potapov_factor(lambd[i], z, ys[:, i])   # β_{λ_i, y_i}(λ_k*): pole=λ_i, eval=z=λ_k*
+            M = M @ beta.conj().T
         ys[:, k] = normalize(M @ v[:, k].reshape(-1, 1))
         Jk = np.eye(m, dtype=complex) - (1.0 + np.conj(lambd[k])) * ys[:, k] @ ys[:, k].conj().T
         Js.append(Jk)
@@ -255,16 +255,18 @@ def krylov_basis(A: np.ndarray, B: np.ndarray, n: int) -> NDArray[complex]:
 
 def mimo_poles_to_ir(lambd: NDArray[complex], v: NDArray[complex], C: NDArray[float], m: int) -> NDArray[float]:
     """
-    Convert poles to impulse response. 
+    Convert poles to impulse response.
 
-    Parameters: 
-        lambd: poles of the system. 
-        v: null basis of the system. shape (m, n) where n is the number of poles and m is the number of inputs
-        C: output matrix. shape (p, m) where p is the number of outputs and m is the number of inputs
-        m: number of inputs
+    Parameters:
+        lambd: poles of the system. shape (n,) where n is the number of poles
+        v: null basis of the system. shape (n_inputs, n) where n is the number of poles
+        C: output matrix. shape (p, n) where p is the number of outputs and n is the number of poles
+        m: number of lags (length of the impulse response to generate).
+           NOTE: this is *not* the number of inputs despite the name.
 
-    Returns: 
-        ir: impulse response. shape (p, m, n) where p is the number of outputs and n is the number of poles
+    Returns:
+        ir: impulse response. shape (p, n_inputs, m) where p is the number of
+            outputs, n_inputs the number of inputs, and m the number of lags.
     """
     n = len(lambd)
     tib_sys = null_basis_realization(lambd, v)

@@ -23,6 +23,8 @@ import scipy.linalg as la
 from dataclasses import dataclass
 from typing import Tuple, Optional
 
+from ga.filters.tib import TIBStateSpace
+
 
 @dataclass
 class BalancedReductionResult:
@@ -289,6 +291,64 @@ def extract_poles_and_nullvecs_from_bt(
             null_vectors[i, i % m] = 1.0
 
     return poles, null_vectors
+
+
+def tib_from_state_space(
+    A: np.ndarray,
+    B: np.ndarray,
+) -> Tuple[TIBStateSpace, np.ndarray]:
+    """
+    Re-coordinate a stable, real state-space (A, B) into Triangular Input
+    Balanced (TIB) form, exactly preserving the transfer function.
+
+    This is the correct counterpart to extract_poles_and_nullvecs_from_bt().
+    That function returns the normalized rows of the *Schur* realization's B,
+    which is balanced in the Grammian sense but NOT input-balanced, so feeding
+    it to null_basis_realization yields the wrong system (see docs TIBForm).
+    Here we instead:
+
+      1. input-balance: similarity by the Cholesky factor of the controllability
+         Grammian P (P = A P A* + B B*) so the new controllability Grammian is I
+         -- i.e. A1 A1* + B1 B1* = I, the TIB balance identity;
+      2. apply an orthogonal real-Schur rotation to make A (block-)lower-
+         triangular. Orthogonal transforms preserve the Grammian, so balance is
+         retained.
+
+    The result is real, exactly TIB, and reproduces the original impulse
+    response. Real poles appear as 1x1 entries on the diagonal; complex-
+    conjugate pairs appear as 2x2 real diagonal blocks (so A is block-lower-
+    triangular / lower-Hessenberg). Recover the poles via la.eigvals or
+    TIBStateSpace.poles().
+
+    Parameters:
+    A: state matrix (n x n), stable (all eigenvalues inside the unit circle)
+    B: input matrix (n x m)
+
+    Returns:
+    Tuple[TIBStateSpace, np.ndarray]:
+        sys: TIB realization (A_tib, B_tib)
+        transform: (n x n); the output matrix maps as C_tib = C @ transform
+    """
+    A = np.asarray(A, dtype=float)
+    B = np.asarray(B, dtype=float)
+
+    # 1. Controllability Grammian P = A P A* + B B*, factor P = Z Z*
+    P = solve_lyapunov_discrete(A, B @ B.T)
+    Z = cholesky_with_fallback(P, "Controllability Grammian P")
+
+    # 2. Input-balance: similarity by Z drives the controllability Grammian to I
+    A1 = la.solve(Z, A @ Z)
+    B1 = la.solve(Z, B)
+
+    # 3. Orthogonal real-Schur: upper quasi-triangular U* A1 U (2x2 blocks for
+    #    complex-conjugate pairs). Flipping reverses it to (block-)lower form.
+    _, U = la.schur(A1, output="real")
+    Uf = U[:, ::-1]
+    A_tib = Uf.T @ A1 @ Uf
+    B_tib = Uf.T @ B1
+    transform = Z @ Uf
+
+    return TIBStateSpace(A_=A_tib, B_=B_tib), transform
 
 
 def bt_impulse_response(

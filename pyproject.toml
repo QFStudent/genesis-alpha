@@ -13,6 +13,12 @@ dependencies = [
     "logbook",
 ]
 
+[project.optional-dependencies]
+dev = ["pytest"]
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["ga*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
