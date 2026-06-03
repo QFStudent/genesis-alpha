@@ -72,3 +72,28 @@ Quick tail: `grep "^## \[" log.md | tail -10`
 - The orthogonal real-Schur step delivers exactly the block structure TIBForm's Q rotation describes, with no extra work (verified empirically before coding)
 - tests/test_bt_to_tib.py: dropped the reject-complex test, added TestComplexPoles (5 tests: round-trip IR, input-balance, realness, eigenvalue recovery, block-lower-triangular); full suite 43 passed
 - TIBForm.md: ✅ block now states complex poles handled; Open Question complex-pole caveat removed
+
+## [2026-06-02] query | Created concepts/PyMORDataDrivenID.md — noise-robust derivation of poles/null vectors
+- Query: is pyMOR (pymor.org) better, or are there alternatives, for deriving poles/null vectors from data at low SNR?
+- Key framing filed: MOR != sysID. pyMOR (ERA/Loewner/AAA/BT/IRKA) is mature reduction + a validation reference, but does NOT address measurement noise
+- The real lever is upstream system identification: N4SID/MOESP/CVA, N2SID (nuclear-norm, short batches), Bayesian/kernel-based ID, Hankel denoising (optimal SVHT Gavish-Donoho, Cadzow/SLRA), TLS-ERA, freq-domain VF/AAA/Loewner — then feed (A,B,C) into the exact tib_from_state_space
+- Python tooling noted: SIPPY, control+slycot, PyDMD
+- index.md: 13 pages; linked from TIBForm/ModelReduction/InformationGeometry/MarketImpact
+
+## [2026-06-02] update | Added Bayesian-TIB fusion section to PyMORDataDrivenID.md
+- Reframed (per user's view): TIB = linear basis expansion of the IR (fixed poles+null vectors define P basis functions; estimate C by LS, = fit_output_matrix)
+- Unifying claim: TIB and kernel/Bayesian ID are both linear IR estimators / basis methods; TIB = hard-truncated explicit basis, kernel = soft-weighted implicit basis; same "stable decaying modes" prior
+- Corrected earlier framing: they are NOT opposite ends of bias-variance; difference is regularisation mechanism (subset selection vs shrinkage = best-subset vs ridge)
+- Fusion (Bayesian-TIB): estimate the same C but with a kernel prior over an overcomplete pole grid, marginal-likelihood tuned -> decouples basis richness from effective complexity; new Open Question to implement/benchmark it vs plain TIB-LS
+
+## [2026-06-02] query | Created concepts/SysIDReturnPrediction.md — I/O design + linear/nonlinear fusion
+- Q: for sysID (TIB/kernel) on financial data, what are inputs/outputs? lagged returns vs TA-lib features? how to combine with nonlinear (tree/DL) models?
+- Filed: output = forward returns (multi-horizon = MIMO, vol-normalised); inputs = raw causal lagged drivers (lagged returns, order flow/OFI, cross-asset) NOT linear TA indicators (subsumed by the IR); sysID = the feature engineering; nonlinear TA value is unreachable by LTI
+- Fusion architectures: A residual/boosting-offset (fragile at low SNR), B stacking (safe default), C feature-fusion (TIB states into nonlinear model -> regime gating), D meta-labeling (size, don't re-predict); avoid pure residual-chasing; strict purged/embargoed CV
+- index.md: 14 pages; linked TIBForm/PyMORDataDrivenID/ModelReduction/MarketImpact
+
+## [2026-06-03] ingest | PilloDeNico-Automatica-2010 (raw/) — Pillonetto & De Nicolao kernel-based system ID
+- Created wiki/papers/PillonettoDeNicolao2010-KernelSysID.md — stable spline kernel K(s,t)=W(e^-βs,e^-βt) (integrated Wiener on exp-warped time axis); encodes smoothness AND BIBO-stability; nonparametric RKHS/GP estimate; 3 hyperparameters (λ,β,σ) by marginal likelihood; two-step "estimate then project" for reduced-order models
+- Key results: beats ETFE/cubic-spline/Gaussian-kernel/PEM+AIC on 100-sample benchmarks, near PEM+oracle; order-30 random systems K=0.23 vs PEM+AIC 0.35/BIC 0.32/oracle 0.21; 95% CI coverage 93.7%; works on reduced/nonuniform grids
+- Updated PyMORDataDrivenID.md (sources frontmatter + links + references) and SysIDReturnPrediction.md (related pages); the TC kernel in notebooks/kernel_bayesian_id.ipynb is the discrete simplification of this stable spline kernel
+- index.md: 15 pages, 6 sources ingested
