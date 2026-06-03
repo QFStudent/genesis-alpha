@@ -2,7 +2,7 @@
 
 *The LLM updates this on every ingest. Read this first before answering any query — use it to find relevant pages, then drill in.*
 
-Last updated: 2026-06-03 | Pages: 15 | Sources ingested: 6
+Last updated: 2026-06-03 | Pages: 17 | Sources ingested: 7
 
 ---
 
@@ -15,6 +15,7 @@ Last updated: 2026-06-03 | Pages: 15 | Sources ingested: 6
 - [[wiki/papers/HanzonOliviPeeters2010-TangentialSchur|Hanzon, Olivi & Peeters 2010 — Tangential Schur]] — primary source for Blaschke factor (eq 26) and elementary J-inner factor (eq 28); confirms (pole, eval) convention
 - [[wiki/papers/Olivi2010-LosslessParametrization|Olivi 2010 — Lossless Parametrization (HDR)]] — exact definition of Blaschke-Potapov factor B_{w,u}(z) (eq 1.11) matching the code; unit-vector-in-kernel requirement
 - [[wiki/papers/PillonettoDeNicolao2010-KernelSysID|Pillonetto & De Nicolao 2010 — Kernel-Based System ID]] — stable spline kernel; nonparametric Bayesian IR estimation with marginal-likelihood hyperparameters; foundation of the kernel/Bayesian method and Bayesian-TIB fusion
+- [[wiki/papers/Baltussen2020-IntradayMomentumHedging|Baltussen et al. 2020 — Intraday Momentum & Hedging]] — market intraday momentum everywhere (60+ futures); gamma-hedging mechanism; r_ROD predicts r_LH then reverts over days
 
 ---
 
@@ -27,6 +28,7 @@ Last updated: 2026-06-03 | Pages: 15 | Sources ingested: 6
 - [[wiki/concepts/BlaschkeFactor|Blaschke Factor]] — b_w(z) and Blaschke-Potapov factor; pole vs evaluation point convention; why the args aren't symmetric (the line-185 bug)
 - [[wiki/concepts/PyMORDataDrivenID|pyMOR & Data-Driven System ID]] — deriving poles/null vectors from noisy data; MOR vs sysID; why pyMOR helps reduction not SNR; N4SID/N2SID/Bayesian/Hankel-denoising upstream of tib_from_state_space
 - [[wiki/concepts/SysIDReturnPrediction|SysID for Return Prediction]] — I/O design (raw lagged drivers vs TA features), linear/nonlinear boundary, and combining TIB/kernel with tree/DL models (residual vs stacking vs feature-fusion vs meta-labeling)
+- [[wiki/concepts/MarketIntradayMomentum|Market Intraday Momentum]] — hedging-demand channel (r_ROD predicts r_LH + multi-day reversal); how to turn it into sysID/TIB signals: learned intraday IR, momentum+reversal propagator, NGE regime-gating, MIMO pooling
 
 ---
 

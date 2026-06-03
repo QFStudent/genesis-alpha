@@ -97,3 +97,9 @@ Quick tail: `grep "^## \[" log.md | tail -10`
 - Key results: beats ETFE/cubic-spline/Gaussian-kernel/PEM+AIC on 100-sample benchmarks, near PEM+oracle; order-30 random systems K=0.23 vs PEM+AIC 0.35/BIC 0.32/oracle 0.21; 95% CI coverage 93.7%; works on reduced/nonuniform grids
 - Updated PyMORDataDrivenID.md (sources frontmatter + links + references) and SysIDReturnPrediction.md (related pages); the TC kernel in notebooks/kernel_bayesian_id.ipynb is the discrete simplification of this stable spline kernel
 - index.md: 15 pages, 6 sources ingested
+
+## [2026-06-03] ingest | heding demand and market intraday momentum.pdf (raw/) — Baltussen, Da, Lammers & Martens 2020
+- Created wiki/papers/Baltussen2020-IntradayMomentumHedging.md — market intraday momentum everywhere (60+ futures, 1974-2020); rest-of-day return r_ROD predicts last-half-hour r_LH; gamma-hedging-demand mechanism (NGE proxy, LETF rebalancing); reverts over ~3 days (transitory price pressure); equity r_ROD OOS R^2 2.88%, Sharpe 0.87-1.73 gross
+- Created wiki/concepts/MarketIntradayMomentum.md — phenomenon + mechanism + the sysID connection: it's a predictable-flow market-impact propagator. Suggestions to build signals: (1) learn the intraday IR (kernel/Bayesian) instead of equal-weight r_ROD; (2) model momentum+reversal as one TIB propagator; (3) regime-gate by NGE (feature-fusion/meta-labeling); (4) joint MIMO pooling across assets; (5) trade the reversal leg
+- Updated MarketImpact.md (key papers + empirical: predictable hedging flow = temporary impact at market level) and SysIDReturnPrediction.md (related pages)
+- index.md: 17 pages, 7 sources ingested

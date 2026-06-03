@@ -1,8 +1,8 @@
 ---
 type: concept
 tags: [market-impact, liquidity, execution]
-sources: [Kong2018-TIBInfoGeometry, Mu2026-ModelReductionNotes]
-updated: 2026-05-31
+sources: [Kong2018-TIBInfoGeometry, Mu2026-ModelReductionNotes, Baltussen2020-IntradayMomentumHedging]
+updated: 2026-06-03
 ---
 
 # Market Impact
@@ -35,11 +35,13 @@ The LTI/TIB framework models market impact as the impulse response of a causal f
 - A **5-pole TIB model** captures > 99% of the Hankel energy for power-law decay impact systems ([[papers/Kong2018-TIBInfoGeometry]], Table 1).
 - The **H∞ error bound** for balanced truncation is tight: ‖Gₙ - Gᵣ‖_{H∞} ≤ 2 × sum of neglected Hankel singular values ([[papers/Mu2026-ModelReductionNotes]]).
 - Hankel norm is more relevant than H∞ for execution cost modelling — it bounds response energy rather than worst-case gain ([[concepts/ModelReduction]]).
+- **Hedging flow as an *economic mechanism* for temporary price pressure:** market-maker gamma hedging is a predictable, direction-following flow whose temporary price pressure shows up as intraday momentum into the close and **reverts over ~3 days**. This is a *mechanism* explaining a return-predictability result — the signal itself is built by predictive filtering, not by estimating an impact propagator from observed flow. See [[concepts/MarketIntradayMomentum]] ([[papers/Baltussen2020-IntradayMomentumHedging]]).
 
 ## Key Papers
 
 - [[papers/Kong2018-TIBInfoGeometry]] — TIB form derivation; MIMO model reduction; interpretable state-space for impact modelling
 - [[papers/Mu2026-ModelReductionNotes]] — BT square-root algorithm; error bound proof; sanity checks
+- [[papers/Baltussen2020-IntradayMomentumHedging]] — predictable gamma-hedging flow → intraday momentum + multi-day reversal (temporary price-pressure *mechanism*; the signal is built by predictive filtering, not impact propagators); see [[concepts/MarketIntradayMomentum]]
 
 ## Open Questions
 
@@ -49,4 +51,4 @@ The LTI/TIB framework models market impact as the impulse response of a causal f
 
 ## Related Pages
 
-[[concepts/TIBForm]], [[concepts/ModelReduction]]
+[[concepts/TIBForm]], [[concepts/ModelReduction]], [[concepts/MarketIntradayMomentum]], [[concepts/SysIDReturnPrediction]]
