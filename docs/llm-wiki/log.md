@@ -107,3 +107,7 @@ Quick tail: `grep "^## \[" log.md | tail -10`
 ## [2026-06-03] update | Added "Data sources for hedging pressure" to MarketIntradayMomentum.md
 - Tiered the data dependency: Tier 0 price-only (no alt data; r_ROD / learned IR), Tier 1 mechanical flow (LETF AUM+leverage rebalancing demand, NYSE/Nasdaq MOC imbalance feeds), Tier 2 dealer gamma (NGE/GEX from options OI + greeks + dealer-sign assumption; SqueezeMetrics/SpotGamma or OptionMetrics/OPRA; vanna/charm, 0DTE)
 - Practical notes: sequence Tier 0->1->2; point-in-time discipline (look-ahead); gamma/LETF evidence is equity-index-specific
+
+## [2026-06-03] update | Added own-asset-vs-cross-asset / MIMO section to MarketIntradayMomentum.md + Tier-0 notebook
+- Created notebooks/intraday_ir_vs_rod.ipynb (synthetic): learned intraday IR (OLS + kernel/Bayesian) vs equal-weight r_ROD; kernel IR robust + best (OOS R^2 ~0.049 vs r_ROD 0.037), OLS IR overfits at small N (negative OOS R^2); sample-size sweep
+- Added "Own-asset (diagonal) vs cross-asset (off-diagonal)" section + reworded suggestion #4. Clarifications: "diagonal" = transfer-function matrix H(z), not A; canonical null vectors realize the diagonal input->state map (block-diag C => q independent own-asset filters; full C sneaks in pole-constrained cross-asset); POOLING = tying C across assets (parameter sharing/prior), NOT a consequence of MIMO (untied MIMO = independent fits); clean pooling needs shared pole bank per asset; only C is regularized in fixed-basis fit (pooling and Bayesian-TIB are both C-priors)
