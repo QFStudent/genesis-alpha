@@ -37,11 +37,35 @@ This is a **return-predictability** result, and a natural fit for **system ident
 - Reversal over ~3 days; momentum magnitude scales with |NGE| and LETF demand.
 - Distinct from cross-sectional intraday seasonality (Heston et al. 2010).
 
+## Data sources for hedging pressure
+
+The price-based signal (suggestion 1) needs **no alternative data**; the *mechanism-based* variants (suggestions 2–3) do. Three tiers:
+
+| Tier | Signal | Data |
+|---|---|---|
+| **0 — price only** | `r_ROD` / learned intraday IR → `r_LH` | intraday index / futures prices |
+| **1 — mechanical flow** | LETF rebalancing demand; close-auction pressure | LETF AUM + leverage (public); exchange MOC imbalance feeds |
+| **2 — dealer gamma** | NGE / gamma-exposure input & regime-gate | options-derived dealer gamma (alt data) |
+
+**Tier 2 — dealer gamma exposure (NGE / GEX).** Dealers are typically short gamma; hedging to stay delta-neutral amplifies moves into the close. To compute it you need (i) **options open interest by strike/expiry** (EOD minimum; intraday for 0DTE), (ii) **gamma per option** (vendor-provided, or Black–Scholes from the IV surface + strike/expiry/spot/rate), and (iii) a **dealer-positioning sign assumption** — the main error source: OI alone doesn't reveal which side dealers hold (better to classify trades buyer/seller-initiated). `GEX ≈ Σ OI·gamma·mult·spot²·0.01` under that sign; the **gamma-flip level** (zero-GEX spot) is a regime boundary.
+- *Vendors:* **SqueezeMetrics** (used by the paper; GEX + DIX), SpotGamma, Tier1Alpha.
+- *Build-your-own:* OptionMetrics IvyDB (historical greeks/IV — best for backtests), CBOE DataShop / OPRA, ORATS, Polygon.
+- *Beyond gamma:* **vanna & charm** drive predictable into-close / into-OpEx flows; **0DTE** gamma is now first-order and needs intraday options data.
+
+**Tier 1 — mechanical flow.**
+- **LETF rebalancing:** MOC demand ≈ `AUM × (L² − L) × r_day`, summed across LETFs on the same underlying. Data: AUM / shares outstanding + leverage from issuers (ProShares, Direxion) or ETF databases. Computable from public data.
+- **Close-auction (MOC) imbalances:** NYSE / Nasdaq publish auction imbalances intraday (~3:50pm ET) — the most *direct* read of net close pressure, available *before* the `r_LH` window.
+
+**Practical notes.**
+- *Sequence:* prove Tier 0 first; add Tier 1 (cheap, public); invest in Tier 2 last (most cost + model risk via the sign assumption).
+- *Point-in-time discipline:* AUM / OI are reported with lags → use point-in-time snapshots (look-ahead trap).
+- *Scope:* the gamma/LETF evidence is **equity-index-specific** (SPX/ES + equity LETFs); for bonds / commodities / FX the mechanism data is sparse, so the price-based version is what generalizes across the 60+ contracts.
+
 ## Open Questions / Caveats
 
 - Net of close-auction execution costs, how much of the gross Sharpe survives?
 - Does a learned intraday IR (kernel/Bayesian) beat equal-weight `r_ROD` OOS after costs?
-- Data dependency: NGE / LETF gamma data (e.g. SqueezeMetrics) — do we have access?
+- Which data tier do we have access to (see *Data sources for hedging pressure*)? Tier 0 needs nothing; Tier 2 (options-derived dealer gamma) is the real dependency.
 - Best regime-gating: hard NGE split vs meta-labeling vs feature-fusion?
 
 ## Related Pages

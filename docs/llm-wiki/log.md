@@ -103,3 +103,7 @@ Quick tail: `grep "^## \[" log.md | tail -10`
 - Created wiki/concepts/MarketIntradayMomentum.md — phenomenon + mechanism + the sysID connection: it's a predictable-flow market-impact propagator. Suggestions to build signals: (1) learn the intraday IR (kernel/Bayesian) instead of equal-weight r_ROD; (2) model momentum+reversal as one TIB propagator; (3) regime-gate by NGE (feature-fusion/meta-labeling); (4) joint MIMO pooling across assets; (5) trade the reversal leg
 - Updated MarketImpact.md (key papers + empirical: predictable hedging flow = temporary impact at market level) and SysIDReturnPrediction.md (related pages)
 - index.md: 17 pages, 7 sources ingested
+
+## [2026-06-03] update | Added "Data sources for hedging pressure" to MarketIntradayMomentum.md
+- Tiered the data dependency: Tier 0 price-only (no alt data; r_ROD / learned IR), Tier 1 mechanical flow (LETF AUM+leverage rebalancing demand, NYSE/Nasdaq MOC imbalance feeds), Tier 2 dealer gamma (NGE/GEX from options OI + greeks + dealer-sign assumption; SqueezeMetrics/SpotGamma or OptionMetrics/OPRA; vanna/charm, 0DTE)
+- Practical notes: sequence Tier 0->1->2; point-in-time discipline (look-ahead); gamma/LETF evidence is equity-index-specific
