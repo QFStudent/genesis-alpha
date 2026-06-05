@@ -2,7 +2,7 @@
 type: concept
 tags: [momentum, short-term-reversal, multi-asset, market-impact]
 sources: [Baltussen2020-IntradayMomentumHedging]
-updated: 2026-06-03
+updated: 2026-06-05
 ---
 
 # Market Intraday Momentum (Hedging-Demand Channel)
@@ -67,6 +67,12 @@ The price-based signal (suggestion 1) needs **no alternative data**; the *mechan
 - *Vendors:* **SqueezeMetrics** (used by the paper; GEX + DIX), SpotGamma, Tier1Alpha.
 - *Build-your-own:* OptionMetrics IvyDB (historical greeks/IV — best for backtests), CBOE DataShop / OPRA, ORATS, Polygon.
 - *Beyond gamma:* **vanna & charm** drive predictable into-close / into-OpEx flows; **0DTE** gamma is now first-order and needs intraday options data.
+
+**Computing dealer gamma from OptionMetrics IvyDB (build-your-own).** IvyDB already provides per-option greeks, so no repricing is needed.
+- *Files/fields:* Option Prices (`opprcd`: `secid, date, exdate, strike_price` (÷1000), `cp_flag`, `open_interest`, `gamma`, `impl_volatility`) joined to Security Prices (`secprd`: spot `close`) on `(secid, date)`; Zero Curve (`zerocd`) only if recomputing greeks / vanna / charm. Filter to the SPX secid (commonly `108105` — verify in `securd`; include the `SPXW` weeklies, and SPY's secid for the ETF leg).
+- *Aggregate (with the dealer-sign assumption):* per option `dgamma = gamma · OI · 100 · S² · 0.01`; `GEX = Σ_calls dgamma − Σ_puts dgamma` (the "dealers long calls / short puts" heuristic — state it explicitly; the sign is the main error source). `NGE` = the `GEX < 0` regime / magnitude; the **gamma-flip** spot solves `Σ dgamma(S*) = 0` (recompute over a spot grid).
+- *Point-in-time:* OI is end-of-day → use `t−1` OI with the current pre-close spot to condition day `t`'s `r_LH` (no look-ahead).
+- *Limitations:* IvyDB is **EOD only ⇒ no intraday / 0DTE gamma** (0DTE OI at EOD ≈ 0; that needs OPRA / intraday options); **no dealer sign** in the data (CBOE/ISE Open-Close data measures customer-vs-firm volume if the heuristic proves fragile); greeks are model-based — sanity-check level/sign against a vendor (e.g. SqueezeMetrics) on an overlapping window.
 
 **Tier 1 — mechanical flow.**
 - **LETF rebalancing:** MOC demand ≈ `AUM × (L² − L) × r_day`, summed across LETFs on the same underlying. Data: AUM / shares outstanding + leverage from issuers (ProShares, Direxion) or ETF databases. Computable from public data.
