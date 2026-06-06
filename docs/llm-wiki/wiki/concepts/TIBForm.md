@@ -92,4 +92,4 @@ TIB is the core representation in `ga/filters/tib.py` and drives the entire mode
 
 ## Related Pages
 
-[[concepts/ModelReduction]], [[concepts/InformationGeometry]], [[concepts/BlaschkeFactor]], [[concepts/MarketImpact]], [[papers/MullhauptRiedel2003-TIBBandMatrix]]
+[[concepts/ModelReduction]], [[concepts/InformationGeometry]], [[concepts/BlaschkeFactor]], [[concepts/ModesAndHankel]], [[concepts/MarketImpact]], [[papers/MullhauptRiedel2003-TIBBandMatrix]]

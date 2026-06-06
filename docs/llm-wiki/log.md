@@ -119,3 +119,8 @@ Quick tail: `grep "^## \[" log.md | tail -10`
 - Focused page from the OHLCV->return + pooled-MIMO discussion: own-asset OHLCV inputs (returns/range/log-volume; look-ahead trap from H/L/C bar-end realization; stationarity; collinearity => regularize C; LTI = linear part only)
 - Pooled tied-diagonal-block construction: block-diagonal+tied = pooling; shared pole bank REPLICATED not circulated; build-one-block -> states per instrument -> pooled C; vs dense (overfits, loses even with real cross-asset signal -> use small regularized/low-rank factor block). Refs notebooks/pooled_vs_dense_mimo.ipynb
 - index.md: 18 pages; linked from SysIDReturnPrediction
+
+## [2026-06-06] update | Created concepts/ModesAndHankel.md
+- Precise vocabulary from the modes/eigenvectors discussion: mode = (pole, null vector) input-side descriptor; three distinct objects (pole=scalar/eig of A; state-space eigenvector in C^n; null vector in C^q = input direction); state-space eigenvector A v = λ v decouples modal coords; modal IR h(t)=Σ λ^t (C v_k)(w_k^T B) rank-1 per mode
+- Hankel relationship: #modes=rank(H); HSVs = mode energies NOT poles; poles = eigenvalues of shift operator on Hankel range (not eig of H); null vectors from B-block; ties to msvdreduce. TIB A triangular => states coupled => states != pure modes (modes along eigenvectors)
+- index.md: 19 pages; linked from TIBForm

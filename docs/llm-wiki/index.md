@@ -2,7 +2,7 @@
 
 *The LLM updates this on every ingest. Read this first before answering any query — use it to find relevant pages, then drill in.*
 
-Last updated: 2026-06-05 | Pages: 18 | Sources ingested: 7
+Last updated: 2026-06-06 | Pages: 19 | Sources ingested: 7
 
 ---
 
@@ -30,6 +30,7 @@ Last updated: 2026-06-05 | Pages: 18 | Sources ingested: 7
 - [[wiki/concepts/SysIDReturnPrediction|SysID for Return Prediction]] — I/O design (raw lagged drivers vs TA features), linear/nonlinear boundary, and combining TIB/kernel with tree/DL models (residual vs stacking vs feature-fusion vs meta-labeling)
 - [[wiki/concepts/MarketIntradayMomentum|Market Intraday Momentum]] — hedging-demand channel (r_ROD predicts r_LH + multi-day reversal); how to turn it into sysID/TIB signals: learned intraday IR, momentum+reversal propagator, NGE regime-gating, MIMO pooling
 - [[wiki/concepts/OHLCVPooledPrediction|OHLCV inputs & pooled MIMO prediction]] — own-asset OHLCV features (returns/range/log-volume + look-ahead/stationarity checklist) and the pooled tied-diagonal-block construction (shared pole bank, build-one-block-pool-C) vs dense; demo notebook
+- [[wiki/concepts/ModesAndHankel|Modes, poles, null vectors & the Hankel matrix]] — precise definitions: mode = (pole, null vector); state-space eigenvector vs null vector; modal IR decomposition; poles = shift-operator eigenvalues (not Hankel eigenvalues), HSVs = mode energies
 
 ---
 
