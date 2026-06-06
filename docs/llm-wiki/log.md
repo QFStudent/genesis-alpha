@@ -114,3 +114,8 @@ Quick tail: `grep "^## \[" log.md | tail -10`
 
 ## [2026-06-05] update | Added "Computing dealer gamma from OptionMetrics IvyDB" note (Tier 2) to MarketIntradayMomentum.md
 - Build-your-own GEX/NGE pipeline: opprcd (gamma + OI) x secprd (spot) join; dgamma = gamma·OI·100·S²·0.01; GEX = calls − puts under the dealer-sign heuristic; gamma-flip spot; point-in-time (t−1 OI); limitations (EOD-only => no 0DTE/intraday; no dealer sign => CBOE/ISE Open-Close; sanity-check vs vendor)
+
+## [2026-06-05] update | Created concepts/OHLCVPooledPrediction.md
+- Focused page from the OHLCV->return + pooled-MIMO discussion: own-asset OHLCV inputs (returns/range/log-volume; look-ahead trap from H/L/C bar-end realization; stationarity; collinearity => regularize C; LTI = linear part only)
+- Pooled tied-diagonal-block construction: block-diagonal+tied = pooling; shared pole bank REPLICATED not circulated; build-one-block -> states per instrument -> pooled C; vs dense (overfits, loses even with real cross-asset signal -> use small regularized/low-rank factor block). Refs notebooks/pooled_vs_dense_mimo.ipynb
+- index.md: 18 pages; linked from SysIDReturnPrediction

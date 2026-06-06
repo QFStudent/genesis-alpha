@@ -2,7 +2,7 @@
 
 *The LLM updates this on every ingest. Read this first before answering any query — use it to find relevant pages, then drill in.*
 
-Last updated: 2026-06-03 | Pages: 17 | Sources ingested: 7
+Last updated: 2026-06-05 | Pages: 18 | Sources ingested: 7
 
 ---
 
@@ -29,6 +29,7 @@ Last updated: 2026-06-03 | Pages: 17 | Sources ingested: 7
 - [[wiki/concepts/PyMORDataDrivenID|pyMOR & Data-Driven System ID]] — deriving poles/null vectors from noisy data; MOR vs sysID; why pyMOR helps reduction not SNR; N4SID/N2SID/Bayesian/Hankel-denoising upstream of tib_from_state_space
 - [[wiki/concepts/SysIDReturnPrediction|SysID for Return Prediction]] — I/O design (raw lagged drivers vs TA features), linear/nonlinear boundary, and combining TIB/kernel with tree/DL models (residual vs stacking vs feature-fusion vs meta-labeling)
 - [[wiki/concepts/MarketIntradayMomentum|Market Intraday Momentum]] — hedging-demand channel (r_ROD predicts r_LH + multi-day reversal); how to turn it into sysID/TIB signals: learned intraday IR, momentum+reversal propagator, NGE regime-gating, MIMO pooling
+- [[wiki/concepts/OHLCVPooledPrediction|OHLCV inputs & pooled MIMO prediction]] — own-asset OHLCV features (returns/range/log-volume + look-ahead/stationarity checklist) and the pooled tied-diagonal-block construction (shared pole bank, build-one-block-pool-C) vs dense; demo notebook
 
 ---
 

@@ -68,4 +68,4 @@ Defines how the [[TIBForm|TIB]] / [[PyMORDataDrivenID|kernel]] machinery plugs i
 
 ## Related Pages
 
-[[TIBForm]], [[PyMORDataDrivenID]], [[papers/PillonettoDeNicolao2010-KernelSysID]], [[MarketIntradayMomentum]], [[ModelReduction]], [[MarketImpact]]
+[[TIBForm]], [[PyMORDataDrivenID]], [[papers/PillonettoDeNicolao2010-KernelSysID]], [[MarketIntradayMomentum]], [[OHLCVPooledPrediction]], [[ModelReduction]], [[MarketImpact]]
