@@ -46,6 +46,14 @@ Under the autonomous dynamics `x(t+1) = A x(t)` each **modal coordinate decouple
 
 $$z_k(t) = \lambda_k^{\,t}\, z_k(0) .$$
 
+**Why it decouples (proof).** Put `z(t) = R⁻¹ x(t)`. Then
+
+$$z(t+1) = R^{-1}x(t+1) = R^{-1}A\,x(t) = (R^{-1} A R)\,z(t) = \Lambda\, z(t),$$
+
+since `R⁻¹ A R = R⁻¹(R Λ R⁻¹) R = Λ`. As `Λ` is **diagonal**, row `k` reads `z_k(t+1) = λ_k z_k(t)` — no mixing between coordinates — and iterating gives `z_k(t) = λ_k^t z_k(0)`. The change of basis `R⁻¹` turns the coupled matrix `A` into the diagonal `Λ`: *diagonal = decoupled*. (If `A` is **not** diagonalizable, `R⁻¹AR` is Jordan rather than diagonal, the rows stay coupled, and `t·λ^t`-type terms appear instead.)
+
+**Stability.** Taking magnitudes, `|z_k(t)| = |λ_k|^t\,|z_k(0)|`, so mode `k` **decays to 0 iff `|λ_k| < 1`** (geometric rate `|λ_k|`; a complex `λ_k` gives a decaying oscillation), stays constant if `|λ_k| = 1`, and diverges if `|λ_k| > 1`. Hence `x(t) = Σ_k λ_k^t z_k(0)\, r_k → 0` from any initial state exactly when **all poles lie strictly inside the unit circle** — the stability condition, and why TIB requires `|λ| < 1`.
+
 So if you start the state *exactly* along `rₖ`, it **stays along `rₖ`** and merely decays/oscillates as `λₖᵗ`. That is the precise sense of "mode": a **shape (`rₖ`) in state space that evolves coherently at its own rate (`λₖ`)**, independent of the other modes.
 
 **The modal impulse-response decomposition** ties all the objects together. With `Aᵗ = R Λᵗ R⁻¹ = Σₖ λₖᵗ rₖ wₖᵀ`, where `wₖᵀ` are the rows of `R⁻¹` — the **left** eigenvectors (`wₖᵀ A = λₖ wₖᵀ`) — sandwiching with `C … B` gives

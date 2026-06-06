@@ -125,3 +125,4 @@ Quick tail: `grep "^## \[" log.md | tail -10`
 - Hankel relationship: #modes=rank(H); HSVs = mode energies NOT poles; poles = eigenvalues of shift operator on Hankel range (not eig of H); null vectors from B-block; ties to msvdreduce. TIB A triangular => states coupled => states != pure modes (modes along eigenvectors)
 - index.md: 19 pages; linked from TIBForm
 - Expanded the state-space-eigenvector section: full dynamical meaning (modal-coordinate decoupling), the diagonalization, the rank-1 modal IR decomposition, and the right/left-eigenvector → output/input-direction table (null vector = input-space image of left eigenvector through B)
+- Fixed notation clash (r_k = right eigenvector, w_k = left, v_k reserved for null vector); added the decoupling **proof** (z=R⁻¹x ⇒ z(t+1)=Λz(t); diagonalizable-only, else Jordan/t·λ^t) and the **stability** consequence (|z_k|=|λ_k|^t|z_k(0)| → 0 iff |λ|<1) under the modal-coordinate statement
