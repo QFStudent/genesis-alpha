@@ -28,15 +28,42 @@ So the **`(pole, null vector)` pair is the input-side descriptor of a mode**. Fo
 
 The null vector is **not** the eigenvector of `A` — they live in different spaces (`ℂ^q` vs `ℂⁿ`).
 
-## State-space eigenvector
+## State-space eigenvector — the full picture
 
-`A vₖ = λₖ vₖ`, `vₖ ∈ ℂⁿ`. Diagonalize `A = VΛV⁻¹` and write `x(t) = Σ zₖ(t) vₖ`; the modal coordinates **decouple**, `zₖ(t) = λₖᵗ zₖ(0)`. So `vₖ` is the state-space *shape* that evolves coherently at rate `λₖ`. The **right** eigenvector `vₖ` gives the **output** direction `C vₖ`; the **left** eigenvector `wₖ` (rows of `V⁻¹`) gives the **input** direction `wₖᵀ B` ≈ the null vector.
+**Definition.** The state-space eigenvectors are the (right) eigenvectors of `A`:
 
-**Modal impulse response** (everything in one place):
+$$A\,v_k = \lambda_k\, v_k, \qquad v_k \in \mathbb{C}^n .$$
 
-$$h(t) = C A^t B = \sum_k \lambda_k^{\,t}\,(C v_k)(w_k^\top B)$$
+They live in the **state space** `ℂⁿ` (dimension `n` = order = number of states) — *not* in the input space `ℂ^q` (where the null vectors live), and not in the output space.
 
-— a sum of **rank-1** terms: rate × output-direction × input-direction.
+**What it means dynamically.** `vₖ` is the direction in state space that the dynamics act on as **pure scaling by `λₖ`** — it does not mix into other directions. Diagonalize `A = V Λ V⁻¹` (`V = [v₁ … vₙ]`, `Λ = diag(λₖ)`) and write the state in that basis,
+
+$$x(t) = \sum_k z_k(t)\, v_k .$$
+
+Under the autonomous dynamics `x(t+1) = A x(t)` each **modal coordinate decouples**:
+
+$$z_k(t) = \lambda_k^{\,t}\, z_k(0) .$$
+
+So if you start the state *exactly* along `vₖ`, it **stays along `vₖ`** and merely decays/oscillates as `λₖᵗ`. That is the precise sense of "mode": a **shape (`vₖ`) in state space that evolves coherently at its own rate (`λₖ`)**, independent of the other modes.
+
+**The modal impulse-response decomposition** ties all the objects together. With `Aᵗ = V Λᵗ V⁻¹ = Σₖ λₖᵗ vₖ wₖᵀ`, where `wₖᵀ` are the rows of `V⁻¹` — the **left** eigenvectors (`wₖᵀ A = λₖ wₖᵀ`) — sandwiching with `C … B` gives
+
+$$h(t) = C A^t B = \sum_{k=1}^{n} \lambda_k^{\,t}\,\underbrace{(C v_k)}_{\text{output direction}}\,\underbrace{(w_k^\top B)}_{\text{input direction}} .$$
+
+Each mode contributes a **rank-1** term: **rate × output-direction × input-direction**. This is where every object slots in:
+
+| object | space | role in the mode |
+|---|---|---|
+| pole `λₖ` | scalar ℂ | the **rate** (decay / oscillation); `= eig(A)` |
+| **right** eigenvector `vₖ` | state ℂⁿ | the mode's state-space **shape**; gives the **output direction** `C vₖ ∈ ℂ^p` |
+| **left** eigenvector `wₖ` | state ℂⁿ | the dual direction; gives the **input direction** `wₖᵀ B ∈ ℂ^q` |
+| **null vector** (input) | input ℂ^q | the input combination that drives the mode = `wₖᵀ B` (normalized) |
+
+**So the null vector is the input-space *image* of the left eigenvector through `B`** — related to, but living in a different space than, the state-space eigenvector. That is the precise reason **"null vector ≠ eigenvector of `A`"**: the null vector is in input space `ℂ^q`, the eigenvector in state space `ℂⁿ`. Symmetrically, the **output direction `C vₖ`** is the output-space image of the *right* eigenvector through `C`.
+
+**Two readings of one mode:**
+- *State view* — a direction `vₖ` in `ℂⁿ` that decays as `λₖᵗ`.
+- *Input/output view* — a rank-1 channel `λₖᵗ · (output direction)(input direction)` from inputs to outputs.
 
 ## Relationship to the Hankel matrix
 
