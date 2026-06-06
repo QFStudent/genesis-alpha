@@ -42,7 +42,7 @@ They live in the **state space** `ℂⁿ` (dimension `n` = order = number of sta
 
 $$x(t) = \sum_k z_k(t)\, r_k .$$
 
-Under the autonomous dynamics `x(t+1) = A x(t)` each **modal coordinate decouples**:
+Where $z_k(t)$ = the projection of the state onto the k-th left eigenvector - "how much of mode k is active in the state at time t". Under the autonomous dynamics `x(t+1) = A x(t)` each **modal coordinate decouples**:
 
 $$z_k(t) = \lambda_k^{\,t}\, z_k(0) .$$
 
@@ -53,6 +53,12 @@ $$z(t+1) = R^{-1}x(t+1) = R^{-1}A\,x(t) = (R^{-1} A R)\,z(t) = \Lambda\, z(t),$$
 since `R⁻¹ A R = R⁻¹(R Λ R⁻¹) R = Λ`. As `Λ` is **diagonal**, row `k` reads `z_k(t+1) = λ_k z_k(t)` — no mixing between coordinates — and iterating gives `z_k(t) = λ_k^t z_k(0)`. The change of basis `R⁻¹` turns the coupled matrix `A` into the diagonal `Λ`: *diagonal = decoupled*. (If `A` is **not** diagonalizable, `R⁻¹AR` is Jordan rather than diagonal, the rows stay coupled, and `t·λ^t`-type terms appear instead.)
 
 **Stability.** Taking magnitudes, `|z_k(t)| = |λ_k|^t\,|z_k(0)|`, so mode `k` **decays to 0 iff `|λ_k| < 1`** (geometric rate `|λ_k|`; a complex `λ_k` gives a decaying oscillation), stays constant if `|λ_k| = 1`, and diverges if `|λ_k| > 1`. Hence `x(t) = Σ_k λ_k^t z_k(0)\, r_k → 0` from any initial state exactly when **all poles lie strictly inside the unit circle** — the stability condition, and why TIB requires `|λ| < 1`.
+
+**Driven vs. autonomous — why the forecast doesn't vanish.** The decay above is the *autonomous* (`u = 0`) coast-down: it says the memory of past inputs and of the initial state **fades**, not that the running model outputs zero. The actual model is **driven**, `x(t+1) = A x(t) + B u(t)`, with a new input every step:
+
+$$x(t) = \underbrace{A^t x(0)}_{\to\,0} \;+\; \underbrace{\sum_{\tau=0}^{t-1} A^{\,t-1-\tau} B\, u(\tau)}_{\text{forced — persists}} .$$
+
+Only the **initial-condition** term decays; the **forced** term — the memory-weighted sum of all past inputs — keeps the state alive as long as inputs keep arriving. So the prediction `y(t) = C x(t) = (h * u)(t)` (with the impulse response `h(τ) = C A^τ B`) does **not** go to zero. What the pole decay actually buys is **fading memory**: `h(τ) → 0`, so old inputs are gradually forgotten and recent ones dominate — exactly what you want in a predictor (an EMA decays to zero only if you *stop* feeding it data). `|λ| ≥ 1` would instead mean infinite memory / a blow-up.
 
 So if you start the state *exactly* along `rₖ`, it **stays along `rₖ`** and merely decays/oscillates as `λₖᵗ`. That is the precise sense of "mode": a **shape (`rₖ`) in state space that evolves coherently at its own rate (`λₖ`)**, independent of the other modes.
 
