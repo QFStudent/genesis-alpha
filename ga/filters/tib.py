@@ -218,6 +218,70 @@ def null_basis_realization(lambd: NDArray[complex],
     return TIBStateSpace(A_=A, B_=B)
 
 
+def build_tib_from_directions(lambd: NDArray[complex],
+                              y: NDArray[complex]) -> "TIBStateSpace":
+    """
+    Build a TIB realization from poles and ALREADY-ORTHONORMAL input directions.
+
+    Companion to null_basis_realization for the *recovery* direction.
+    null_basis_realization takes raw null vectors v and Blaschke-orthonormalizes them
+    into y; this function takes the orthonormal y directly and runs the same forward
+    recursion *without* the orthogonalization step. Use it to reconstruct a TIB pair
+    from directions recovered by ga.reducers.hankel.msvdreduce_fixed (whose output is
+    already the orthonormalized y_k).
+
+    WARNING: do NOT pass recovered y_k to null_basis_realization -- it treats its
+    input as raw v and re-applies the Blaschke deflation to already-deflated vectors
+    (double-deflation), realizing the wrong transfer function. Pass them here instead.
+
+    Parameters:
+        lambd: poles, shape (n,).
+        y: orthonormal input directions, shape (m, n) -- columns are unit vectors.
+
+    Returns:
+        TIBStateSpace with A (n x n, block-lower-triangular) and B (n x m).
+    """
+    lambd = np.asarray(lambd, dtype=complex).reshape(-1)
+    n = len(lambd)
+
+    y = np.asarray(y, dtype=complex)
+    if y.ndim != 2 or y.shape[1] != n:
+        raise ValueError(f"y must have shape (m, n). Got {y.shape}, n={n}.")
+    m = y.shape[0]
+
+    if np.any(np.abs(lambd) >= 1.0 + 1e-12):
+        raise ValueError("Poles must be inside the unit circle.")
+
+    y0 = y[:, 0].reshape(-1, 1)
+    t = np.sqrt(max(0.0, 1.0 - np.abs(lambd[0])**2))
+    A = np.array([[lambd[0]]], dtype=complex)
+    B = t * y0.conj().reshape(1, -1)
+    L = np.zeros((m, 0), dtype=complex)
+    P = np.eye(m, dtype=complex)
+    Js = [np.eye(m, dtype=complex) - (1.0 + np.conj(lambd[0])) * y0 @ y0.conj().T]
+
+    for k in range(1, n):
+        L = np.hstack([Js[k-1] @ L, t * y[:, k-1].reshape(-1, 1)])
+        t = np.sqrt(max(0.0, 1.0 - np.abs(lambd[k])**2))
+        yk = y[:, k].reshape(-1, 1)
+        Js.append(np.eye(m, dtype=complex) - (1.0 + np.conj(lambd[k])) * yk @ yk.conj().T)
+        P = Js[k-1] @ P
+
+        a_row = (t * yk.conj().reshape(1, m)) @ L
+        b_row = (t * yk.conj().reshape(1, m)) @ P
+
+        A_new = np.zeros((k+1, k+1), dtype=complex)
+        A_new[:-1, :-1] = A
+        A_new[-1, :-1] = a_row
+        A_new[-1, -1] = lambd[k]
+        A = A_new
+        B = np.vstack([B, b_row])
+
+    A = _real_if_close_ndarray(A)
+    B = _real_if_close_ndarray(B)
+    return TIBStateSpace(A_=A, B_=B)
+
+
 def krylov_basis(A: np.ndarray, B: np.ndarray, n: int) -> NDArray[complex]:
     """
     Use the naive method to generate the Krylov basis. 

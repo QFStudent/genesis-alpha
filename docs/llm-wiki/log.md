@@ -121,6 +121,8 @@ Quick tail: `grep "^## \[" log.md | tail -10`
 - index.md: 18 pages; linked from SysIDReturnPrediction
 
 ## [2026-06-06] update | Created concepts/ModesAndHankel.md
+## [2026-06-07] update | Added "What the Hankel singular values mean — energy" section to ModesAndHankel.md (signal-energy / reach-observe Grammian interpretation of σₖ); added docs/derivations/ pointer links to ModelReduction, TIBForm, ModesAndHankel
+## [2026-06-07] update | Flagged ⚠️ implementation gap in ModelReduction.md and InformationGeometry.md: info_svd_reduce does not realize info-distance reduction (cepstrum not low-rank-Hankel; dropped rho-damping; transpose shift bug). Corrected companions reduce_svd_truncate_fixed / info_svd_reduce_fixed do identification only, not stable reduction
 - Precise vocabulary from the modes/eigenvectors discussion: mode = (pole, null vector) input-side descriptor; three distinct objects (pole=scalar/eig of A; state-space eigenvector in C^n; null vector in C^q = input direction); state-space eigenvector A v = λ v decouples modal coords; modal IR h(t)=Σ λ^t (C v_k)(w_k^T B) rank-1 per mode
 - Hankel relationship: #modes=rank(H); HSVs = mode energies NOT poles; poles = eigenvalues of shift operator on Hankel range (not eig of H); null vectors from B-block; ties to msvdreduce. TIB A triangular => states coupled => states != pure modes (modes along eigenvectors)
 - index.md: 19 pages; linked from TIBForm

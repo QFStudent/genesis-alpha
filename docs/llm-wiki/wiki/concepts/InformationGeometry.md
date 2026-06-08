@@ -2,7 +2,7 @@
 type: concept
 tags: [factor-model, execution, market-impact]
 sources: [Kong2018-TIBInfoGeometry]
-updated: 2026-06-01
+updated: 2026-06-07
 ---
 
 # Information Geometry of LTI Systems
@@ -52,6 +52,8 @@ where Φ is the spectral density matrix (block Toeplitz limit via the generalise
 3. **Cepstrum coordinates**: The Euclidean structure means cepstrum-domain model selection (e.g. comparing two impact models) is as simple as computing a squared L₂ norm. No geodesic integration needed.
 4. **TIB connection**: The TIB form is information-geometrically motivated — it is the parameterisation in which the Fisher information matrix has the simplest structure, making it optimal for prior estimation and dimensionality reduction on the statistical manifold. See [[concepts/TIBForm]].
 
+> ⚠️ **Implementation gap (found 2026-06-07):** the claim in #1 that `info_svd_reduce` "minimises information distance rather than H∞ or H₂" is **not realized in the current code**. As written the function (a) runs the pole-finder directly on the cepstrum `aₖ`, but `aₖ = (1/k)Σλᵏ` is *not* a low-rank-Hankel sequence so Ho–Kalman cannot recover poles from it; (b) computes a `rho`-damped IR but then ignores it; and (c) shares the `msvdreduce` transpose-vs-pinv shift bug. A corrected companion `info_svd_reduce_fixed` (undo the `1/k` → power sums `Σλᵏ`, then shift) recovers poles correctly **but only for identification / full order** — the power-sum Hankel has no energy ordering, so it does **not** give numerically stable order *reduction*. So the figures below are Kong (2018)'s results *in principle*; the repo does not yet implement genuine information-distance reduction. See `docs/derivations/01-hankel-svd-reduction.md` (SISO implementation-note) and [[concepts/ModelReduction]].
+
 ## Empirical Findings
 
 - Cepstrum reduction achieves H₂ norm competitive with balanced truncation on rational systems ([[papers/Kong2018-TIBInfoGeometry]], Figs 12–15).
@@ -62,6 +64,7 @@ where Φ is the spectral density matrix (block Toeplitz limit via the generalise
 
 - Is the information distance objective the right one for market impact? The connection to hypothesis testing says "minimise the chance of confusing two impact models" — is that the same as minimising trading cost error?
 - How does cepstrum reduction interact with the TIB null-basis structure? The `info_svd_reduce` function currently returns poles only, not null vectors.
+- **Implement genuine information-distance order reduction.** The current `info_svd_reduce` path is at best a full-order *identifier* (see ⚠️ above), not a reducer. A real info-distance reducer (Kong2018) needs a different algorithm than Ho–Kalman-on-cepstrum.
 
 ## Related Pages
 

@@ -2,7 +2,7 @@
 type: concept
 tags: [execution, market-impact]
 sources: [Kong2018-TIBInfoGeometry, Mu2026-ModelReductionNotes]
-updated: 2026-05-31
+updated: 2026-06-07
 ---
 
 # Model Reduction for LTI Systems
@@ -20,6 +20,8 @@ Three main families ([[papers/Kong2018-TIBInfoGeometry]], Ch. 2) — POD and tan
 | **Info SVD (cepstrum)** | Impulse response | Poles | Information distance |
 | POD | Snapshots | Reduced basis | L² projection error — *not used* |
 | IRKA | Transfer function samples | Poles | H₂ — *not used* |
+
+> 📐 **Full derivation:** `docs/derivations/01-hankel-svd-reduction.md` — the `msvdreduce` (Hankel-SVD) algorithm from Yu §6.2, with a boxed **BT vs `msvdreduce` separation**.
 
 ## Why It Matters for genesis-alpha
 
@@ -49,6 +51,8 @@ Market data → Estimate IR → msvdreduce / BT → TIB(A_r, B_r, C_r) → execu
 - Minimises information distance (geodesic on Fisher manifold)
 - Better than BT for non-rational/infinite-dimensional systems
 - Implemented in `info_svd_reduce` in `ga/reducers/hankel.py`
+
+> ⚠️ **`info_svd_reduce` does not actually realize this (gap found 2026-06-07).** The "minimises information distance" description is *aspirational, not implemented*. As written the function cannot recover poles — it runs the pole-finder directly on the cepstrum `aₖ = (1/k)Σλᵏ`, which the `1/k` makes **not** a low-rank-Hankel sequence — and it silently drops its own `rho`-damping, and shares the `msvdreduce` transpose-vs-pinv shift bug. A corrected companion `info_svd_reduce_fixed` (multiply by `k` → power sums `Σλᵏ`, then shift) recovers poles **only for identification / full order**, *not* stable order *reduction* (the power-sum Hankel has no energy ordering). **Genuine information-distance reduction (Kong2018) is a different, more involved algorithm — not yet implemented.** See `docs/derivations/01-hankel-svd-reduction.md` (SISO implementation-note) and [[concepts/InformationGeometry]].
 
 > ⚠️ BT and msvdreduce target different norms (H∞ vs Hankel). For execution cost modelling, Hankel norm is more relevant since it bounds the energy of the response rather than the worst-case frequency gain.
 

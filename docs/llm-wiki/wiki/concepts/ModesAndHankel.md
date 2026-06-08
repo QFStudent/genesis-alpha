@@ -2,7 +2,7 @@
 type: concept
 tags: [execution, factor-model]
 sources: []
-updated: 2026-06-06
+updated: 2026-06-07
 ---
 
 # Modes, poles, null vectors & the Hankel matrix
@@ -83,14 +83,46 @@ Each mode contributes a **rank-1** term: **rate × output-direction × input-dir
 
 ## Relationship to the Hankel matrix
 
+> 📐 **Full derivation:** `docs/derivations/01-hankel-svd-reduction.md` — block Hankel, partial SVD, the shift realization (`A = V↑ V↓⁺`), and how the poles fall out.
+
 The Hankel `H` is built from the Markov parameters `hₖ = C Aᵏ B` and factors as `H = O·C` (observability × controllability).
 
 - **# modes = `rank(H)`** = number of nonzero singular values.
-- **Hankel singular values ≠ poles.** They are the mode **energies / importances** — what balanced truncation and Hankel-norm approximation rank and truncate (see [[concepts/ModelReduction]]). (For a symmetric SISO Hankel, its eigenvalues are `±σₖ` = energies, still not poles.)
+- **Hankel singular values ≠ poles.** They are the mode **energies / importances** — what balanced truncation and Hankel-norm approximation rank and truncate (see [[concepts/ModelReduction]]). (For a symmetric SISO Hankel, its eigenvalues are `±σₖ` = energies, still not poles.) See *[What the Hankel singular values mean](#what-the-hankel-singular-values-mean--energy)* below for what "energy" precisely is.
 - **Poles = eigenvalues of the *shift* operator on the Hankel range**, *not* eigenvalues of `H`. Ho–Kalman / ERA: `H = UΣVᵀ`, build the one-block-shifted Hankel `H↑`, `A = Σ^{-1/2}Uᵀ H↑ V Σ^{-1/2}`, poles `= eig(A)`.
 - **Singular vectors `U, V`** span the observability / controllability subspaces (the reduced state coordinates); the **null vectors** come from the *input block* of the controllability factor.
 
 This is exactly what `msvdreduce` does: `S` = Hankel singular values (energy / truncation), `Vh` = controllability subspace, the shift of `Vh` → **poles**, the first `q`-block → **null vectors**. Poles and null vectors come from the **shift + B-block**, *not* from any "Hankel eigen-pair."
+
+## What the Hankel singular values mean — "energy"
+
+"Energy" here is **signal energy**: the squared ℓ²-norm of a sequence, `Σₜ‖uₜ‖²` for an input or `Σₜ‖yₜ‖²` for an output (the discrete analog of `∫|u(t)|² dt` — nothing thermodynamic, just the total "size" of a signal). The Hankel singular values `σₖ` measure how this energy flows **from past inputs, through the state, to future outputs** — they are exactly the singular values of the Hankel operator `Γ: (past input) ↦ (future output)`.
+
+The two Grammians are the two halves of that flow:
+
+- **Reachability (input) energy** — the *minimum* input energy needed to drive the state from rest up to a target `x₀`:
+
+$$E_{\text{reach}}(x_0) = x_0^{*}\,P^{-1}x_0,\qquad P = APA^{*}+BB^{*}.$$
+
+  A state direction with **large `P`** is **cheap to reach** (little input energy); small `P` → "hard to reach".
+
+- **Observability (output) energy** — charge the state to `x₀`, set the input to zero, and let it ring out; the total output energy produced is
+
+$$E_{\text{obs}}(x_0) = \sum_{t\ge0}\lVert y_t\rVert^2 = x_0^{*}\,Q\,x_0,\qquad Q = A^{*}QA+C^{*}C.$$
+
+  Large **`Q`** → that state is **loud**; small `Q` → "quiet".
+
+In a **balanced** realization the coordinates are chosen so that `P = Q = diag(σ₁,…,σₙ)`. Then the `k`-th balanced coordinate has, *simultaneously*,
+
+$$E_{\text{reach}} = \tfrac{1}{\sigma_k}, \qquad E_{\text{obs}} = \sigma_k .$$
+
+So **a large `σₖ` means that coordinate is both easy to excite *and* loud** — it carries much of the input→output energy. Equivalently, along the `k`-th Hankel channel,
+
+$$\sigma_k^2 = \frac{\text{future output energy}}{\text{past input energy}},$$
+
+i.e. `σₖ` is the **RMS gain of the system's memory channel `k`**: how much future output energy you get per unit of past input energy poured into that channel. Truncation keeps the loud, easily-excited channels and drops the ones that are **both hard to reach and quiet** (small `σₖ`) — they barely touch the input→output map, so removing them changes behaviour negligibly. In the data picture, `‖H‖_F² = Σₖ σₖ²` is the total such energy of the impulse response, and each `σₖ²` is one channel's share.
+
+> **Caveat on "mode".** `σₖ` is the energy gain of the `k`-th **balanced state coordinate** (= Hankel singular direction), *not* literally the energy of a single pole-eigenmode `(λₖ, vₖ)`. The two coincide only when the balanced coordinates align with the eigenmodes, which isn't generic. So "`σₖ` = mode energy" is good intuition but loose wording; the precise object is the **input→output energy gain of the `k`-th Hankel direction**.
 
 ## In the TIB realization
 
