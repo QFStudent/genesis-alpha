@@ -95,15 +95,49 @@ against $\{x_j^{(b)}\}_j$ — summed over the input channels $b$ (Yu eq 441). Co
 $O(pq\,k\log k)$. Because each scalar Hankel is symmetric, the adjoint $H^{*}$ (needed by
 `svds`) is the same routine with the channel roles swapped, $a\leftrightarrow b$.
 
-## 6. Why it matters: fast partial Hankel SVD
+## 6. Why it matters: fast matvec → fast partial Hankel SVD
 
-$H^{*}H$ is Hermitian PSD, so its eigenvalues are $\sigma_k^2$ and a few iterations of
-**Lanczos** (`scipy.sparse.linalg.eigsh` / `svds`) recover the top-$r$ singular triples
-using only fast matvecs — the rank-$r$ partial SVD $H\approx\widetilde U\widetilde S
-\widetilde V^{*}$ of [`01-hankel-svd-reduction.md`](01-hankel-svd-reduction.md) §2,
-**without forming $H$**. That is Yu's "Fast Partial Block Hankel SVD" (§6.2), and it is
-what makes Hankel-SVD reduction scale to the long ($k\sim10^3$–$10^4$) impulse responses
-of market-impact data.
+A fast matvec is *not* the same as a fast SVD — and the difference is exactly which SVD
+algorithm you use. For a **direct** SVD (LAPACK `gesdd`, `numpy.linalg.svd`) the FFT
+structure is useless: bidiagonalization touches every entry, $O(n^3)$, with no matvec to
+accelerate. The speedup works only because `svds` / `eigsh` are **iterative
+(Krylov/Lanczos)** methods whose *only* contact with $H$ is through matvecs. Three steps
+turn a fast $Hx$ into a fast SVD.
+
+**(i) SVD ↔ eigenpairs of $H^{*}H$.** From $H=U\Sigma V^{*}$, $H^{*}H=V\Sigma^2V^{*}$, so
+the top-$r$ singular triples are the top-$r$ eigenpairs of $M:=H^{*}H$ — and $M$ is
+**never formed**: applying it is just two matvecs,
+
+$$M v = H^{*}(H v)\qquad(\text{one matvec by }H,\ \text{then one by }H^{*}).$$
+
+**(ii) Lanczos uses only matvecs.** To get the top eigenvector of a symmetric $M$ from
+$Mv$ alone: power iteration $v_{i+1}=Mv_i/\lVert Mv_i\rVert$ converges to it; **Lanczos**
+is the efficient version — apply $M$ a few-times-$r$ times to build a small orthonormal
+Krylov basis $\{v, Mv, M^2v,\dots\}$, project $M$ onto it to a tiny tridiagonal $T$, and
+read the top-$r$ Ritz pairs off $T$ (cheap, $T$ is small). Each iteration's only
+big-matrix work is one matvec $Mv=H^{*}(Hv)$.
+
+**(iii) The cost telescopes.** Total $\approx$ (#iterations) $\times$ (cost of one
+matvec), so the FFT speedup on the inner matvec flows straight through to the whole SVD:
+
+| matvec used | per matvec | partial-SVD total |
+|---|---|---|
+| dense $H x$ | $O\big((pk)(qk)\big)$ | $O\big(r\,(pk)(qk)\big)$ |
+| **FFT fast product** (§3, §5) | $O(pq\,k\log k)$ | $O(r\,pq\,k\log k)$ |
+| direct LAPACK SVD *(contrast)* | — (no matvec) | $O\big((pk)(qk)\min(pk,qk)\big)$, needs dense $H$ |
+
+The result is the rank-$r$ partial SVD $H\approx\widetilde U\widetilde S\widetilde V^{*}$
+of [`01-hankel-svd-reduction.md`](01-hankel-svd-reduction.md) §2 — obtained **without ever
+forming $H$**. That is Yu's "Fast Partial Block Hankel SVD" (§6.2); it scales to the long
+($k\sim10^3$–$10^4$) impulse responses of market-impact data, where forming the dense
+block Hankel would be hopeless.
+
+**The catch / general principle.** Only *iterative* SVDs benefit — a direct factorization
+never calls a matvec, so the FFT structure can't help it. The real move is "use a Krylov
+SVD (which needs only $Hx$ and $H^{*}y$), *then* make those fast with FFT." This is the
+pattern across matrix-free numerics — Toeplitz/Hankel via FFT, kernel matrices via the
+fast multipole method, etc.: **a fast matvec buys fast iterative eigen / SVD / linear
+solves**, while dense direct factorizations get nothing.
 
 > **Implementation-note — `reduce_fft_truncate` bugs.** The SISO
 > `reduce_fft_truncate(h, p)` builds `FastHankelProduct(h)` and runs `eigsh`:

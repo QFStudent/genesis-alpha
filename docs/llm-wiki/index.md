@@ -2,7 +2,7 @@
 
 *The LLM updates this on every ingest. Read this first before answering any query — use it to find relevant pages, then drill in.*
 
-Last updated: 2026-06-06 | Pages: 19 | Sources ingested: 7
+Last updated: 2026-06-07 | Pages: 19 | Derivations: 6 | Sources ingested: 7
 
 ---
 
@@ -31,6 +31,19 @@ Last updated: 2026-06-06 | Pages: 19 | Sources ingested: 7
 - [[wiki/concepts/MarketIntradayMomentum|Market Intraday Momentum]] — hedging-demand channel (r_ROD predicts r_LH + multi-day reversal); how to turn it into sysID/TIB signals: learned intraday IR, momentum+reversal propagator, NGE regime-gating, MIMO pooling
 - [[wiki/concepts/OHLCVPooledPrediction|OHLCV inputs & pooled MIMO prediction]] — own-asset OHLCV features (returns/range/log-volume + look-ahead/stationarity checklist) and the pooled tied-diagonal-block construction (shared pole bank, build-one-block-pool-C) vs dense; demo notebook
 - [[wiki/concepts/ModesAndHankel|Modes, poles, null vectors & the Hankel matrix]] — precise definitions: mode = (pole, null vector); state-space eigenvector vs null vector; modal IR decomposition; poles = shift-operator eigenvalues (not Hankel eigenvalues), HSVs = mode energies
+
+---
+
+## Derivations
+
+*Long-form math write-ups in `docs/derivations/` (outside the wiki vault) — source for a LaTeX write-up. Grounded in Yu (2014) dissertation §6 (`raw/xiaoyu_dissertation.pdf`) + [[wiki/papers/Kong2018-TIBInfoGeometry]] + [[wiki/papers/Mu2026-ModelReductionNotes]]. Cross-linked from the TIBForm / ModelReduction / ModesAndHankel concept pages.*
+
+- [00 — Overview](../derivations/00-overview.md) — shared notation, source map, the unifying "Schur-triangularize → recover null structure" thread
+- [01 — Hankel-SVD reduction (`msvdreduce`)](../derivations/01-hankel-svd-reduction.md) — block Hankel as the past→future operator, shift realization, Schur poles, `B = QᵀB`, why `(A₁,QᵀB)` isn't yet TIB; BT-vs-`msvdreduce` separation; SISO / `info_svd_reduce` bug notes
+- [02 — `null_basis_realization` & Blaschke = Gram–Schmidt](../derivations/02-null-basis-realization.md) — forward-map review; why the Blaschke–Potapov deflation is Gram–Schmidt in the H² (reproducing-kernel) metric
+- [03 — Null-vector recovery](../derivations/03-null-vector-recovery.md) — `msvdreduce` (tangential-Schur) vs `tib_from_state_space`; rebuild directly from `(poles, y)` — do **not** re-deflate
+- [04 — System norms & H₂ optimality](../derivations/04-system-norms-and-h2-optimality.md) — ℓ²/H²/H∞ definitions and relationships; why H₂ is a sub-optimal reduction objective (information distance / cepstrum)
+- [05 — Fast Hankel matvec (FFT)](../derivations/05-fast-hankel-matvec.md) — `O(k log k)` Hankel matvec (reversal → convolution → FFT), block extension, Lanczos partial SVD; `reduce_fft_truncate` float32 / triangular-Hankel bugs
 
 ---
 
