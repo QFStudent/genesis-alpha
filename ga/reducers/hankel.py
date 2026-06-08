@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.linalg as la
-from scipy.sparse.linalg import LinearOperator, eigsh
+from scipy.sparse.linalg import LinearOperator, eigsh, svds
 from numpy.fft import fft, ifft
 
 
@@ -287,6 +287,111 @@ def msvdreduce_fixed(ir: np.ndarray, order: int):
         u[:, i] = ui
         if B.shape[0] > 1:                            # apply J_i^{-1} to the remaining rows
             Jinv = np.eye(di) - (1.0 + 1.0/np.conj(w[i])) * np.outer(ui, np.conj(ui))
+            B = B[1:, :].dot(Jinv)
+        else:
+            B = B[1:, :]
+    return w, u
+
+
+def _scalar_hankel_matvec_fft(g, x, k):
+    """
+    Fast scalar Hankel matvec via FFT: returns H @ x where H[i, j] = g[i + j]
+    (i, j = 0..k-1), using a length-(3k-2) linear convolution. O(k log k).
+
+    g must hold the 2k-1 entries g[0..2k-2] (fully populated, not triangular).
+    See docs/derivations/05-fast-hankel-matvec.md.
+    """
+    g = np.asarray(g, dtype=float)[:2 * k - 1]
+    xr = np.asarray(x, dtype=float)[::-1]
+    n = (2 * k - 1) + k - 1                      # length of the linear convolution
+    nfft = 1 << (max(n, 1) - 1).bit_length()     # next power of two
+    conv = np.fft.irfft(np.fft.rfft(g, nfft) * np.fft.rfft(xr, nfft), nfft)
+    return conv[k - 1:2 * k - 1]
+
+
+class BlockHankelOperator(LinearOperator):
+    """
+    Fully-populated block Hankel matrix as a fast LinearOperator (no dense storage).
+
+    Represents H of shape (p*k, q*k) with p x q blocks  H[i, j] = ir[:, :, i+j],
+    matching blkhankel. matvec/rmatvec run in O(p q k log k) via one FFT convolution
+    per (output, input) channel pair (Yu eq 441); see
+    docs/derivations/05-fast-hankel-matvec.md.
+
+    Unlike FastHankelProduct (which is SISO and encodes the *triangular* single-arg
+    Hankel), this uses the full Markov sequence ir[a, b, 0..2k-2].
+
+    Parameters
+    ----------
+    ir: impulse response, shape (p, q, L) = (outputs, inputs, lags).
+    k:  number of block rows/columns (needs 2k-1 <= L).
+    """
+    def __init__(self, ir, k):
+        self.ir = np.asarray(ir, dtype=float)
+        self.p, self.q, self.L = self.ir.shape
+        self.k = k
+        super().__init__(dtype=np.float64, shape=(self.p * k, self.q * k))
+
+    def _matvec(self, x):
+        k, p, q = self.k, self.p, self.q
+        xb = np.asarray(x, dtype=float).reshape(k, q)
+        yb = np.zeros((k, p))
+        for a in range(p):
+            for b in range(q):
+                yb[:, a] += _scalar_hankel_matvec_fft(self.ir[a, b], xb[:, b], k)
+        return yb.reshape(-1)
+
+    def _rmatvec(self, y):
+        k, p, q = self.k, self.p, self.q
+        yb = np.asarray(y, dtype=float).reshape(k, p)
+        xb = np.zeros((k, q))
+        for a in range(p):
+            for b in range(q):
+                xb[:, b] += _scalar_hankel_matvec_fft(self.ir[a, b], yb[:, a], k)
+        return xb.reshape(-1)
+
+
+def msvdreduce_fast(ir: np.ndarray, order: int):
+    """
+    Fast (FFT/Lanczos) Hankel-SVD recovery -- companion to msvdreduce_fixed.
+
+    Same algorithm as msvdreduce_fixed (pseudo-inverse shift + finished null-vector
+    deflation), but the rank-`order` partial SVD of the block Hankel is computed by
+    Lanczos (scipy.sparse.linalg.svds) on a BlockHankelOperator -- the matrix is never
+    formed densely. This is Yu's "Fast Partial Block Hankel SVD" (sec 6.2); it scales
+    to long impulse responses where the dense blkhankel + la.svd of msvdreduce would
+    not. See docs/derivations/05-fast-hankel-matvec.md.
+
+    Returns (w, u) exactly like msvdreduce_fixed: poles and orthonormal null vectors.
+    Rebuild a TIB pair with ga.filters.tib.build_tib_from_directions (NOT
+    null_basis_realization). Real poles (diagonal read-off), as in msvdreduce.
+
+    Parameters
+    ----------
+    ir: impulse response, shape (p, q, L) = (outputs, inputs, lags).
+    order: number of poles to recover (must be < min(p*k, q*k), k = floor((L+1)/2)).
+
+    Returns
+    -------
+    w: poles, shape (order,).
+    u: orthonormal null vectors, shape (q, order).
+    """
+    do, di, num = ir.shape
+    k = int(np.floor((num + 1) / 2))
+    op = BlockHankelOperator(ir, k)
+    U, S, Vh = svds(op, k=order)                  # Lanczos partial SVD, no dense Hankel
+    idx = np.argsort(S)[::-1]
+    Vh = Vh[idx, :]
+    A = Vh[:, di:].dot(np.linalg.pinv(Vh[:, :-di]))   # shift: pseudo-inverse
+    A, Q = lschur(A)
+    B = Q.T.dot(Vh[:, :di]).astype(complex)
+    w = np.diag(A).astype(complex)
+    u = np.zeros((di, order), dtype=complex)
+    for i in range(order):
+        ui = B[0] / np.linalg.norm(B[0], ord=2)
+        u[:, i] = ui
+        if B.shape[0] > 1:
+            Jinv = np.eye(di) - (1.0 + 1.0 / np.conj(w[i])) * np.outer(ui, np.conj(ui))
             B = B[1:, :].dot(Jinv)
         else:
             B = B[1:, :]

@@ -19,7 +19,8 @@ import pytest
 
 from ga.filters.tib import (null_basis_realization, build_tib_from_directions,
                             mimo_poles_to_ir, krylov_basis, poles_chebyshev_roots)
-from ga.reducers.hankel import msvdreduce_fixed
+from ga.reducers.hankel import (msvdreduce_fixed, msvdreduce_fast,
+                                BlockHankelOperator, blkhankel)
 
 
 def _ir(A, B, C, lags):
@@ -106,3 +107,23 @@ class TestBuildFromDirections:
         poles = poles_chebyshev_roots(4)
         with pytest.raises(ValueError):
             build_tib_from_directions(poles, np.ones((2, 3)))   # y has n=3, poles has n=4
+
+
+class TestFastMsvd:
+    """The FFT/Lanczos fast path matches the dense Hankel and the dense recovery."""
+
+    def test_block_operator_matches_dense(self, target):
+        ir = target["ir"]
+        k = (ir.shape[2] + 1) // 2
+        op, H = BlockHankelOperator(ir, k), blkhankel(ir)
+        rng = np.random.default_rng(0)
+        x = rng.standard_normal(op.shape[1])
+        y = rng.standard_normal(op.shape[0])
+        assert np.max(np.abs(op @ x - H @ x)) < 1e-9          # matvec
+        assert np.max(np.abs(op.T @ y - H.T @ y)) < 1e-9      # rmatvec (adjoint)
+
+    def test_fast_matches_dense_poles(self, target):
+        wf, _ = msvdreduce_fast(target["ir"], target["n"])
+        wd, _ = msvdreduce_fixed(target["ir"], target["n"])
+        np.testing.assert_allclose(np.sort(np.real(wf)), np.sort(np.real(wd)), atol=1e-9)
+        np.testing.assert_allclose(np.sort(np.real(wf)), np.sort(target["poles"]), atol=1e-9)
