@@ -9,9 +9,13 @@ class FastHankelProduct(LinearOperator):
     Parameters
     ----------
     h: impulse response without the zero lag term, np.ndarray, shape = (n, )
+    dtype: declared operator dtype. Defaults to float64: the FFT matvec computes in
+        float64 (it returns ``y.real``), so declaring float32 made iterative solvers
+        such as eigsh iterate in single precision and lose ~6 digits -- the historical
+        reduce_fft_truncate accuracy bug.
     """
 
-    def __init__(self, h: np.ndarray, dtype='float32'):
+    def __init__(self, h: np.ndarray, dtype='float64'):
         self.h = h
         self.shape = (len(h), len(h))
         self.dtype = np.dtype(dtype)
@@ -396,5 +400,76 @@ def msvdreduce_fast(ir: np.ndarray, order: int):
         else:
             B = B[1:, :]
     return w, u
+
+
+def msvdreduce_complex(ir: np.ndarray, order: int, fit_C: bool = True, num_lags: int = None):
+    """
+    Hankel-SVD reduction to a real TIB realization, for REAL **or COMPLEX** poles.
+
+    Companion to msvdreduce_fixed that removes its real-pole-only limitation. Rather than
+    reading poles off the real-Schur diagonal and peeling scalar null vectors -- which is
+    wrong for complex-conjugate poles, because the real Schur form carries them in 2x2
+    blocks, not as scalar diagonal entries -- this forms the dense shift realization
+    (A, B) from the truncated SVD (eig(A) = the poles, real or complex) and re-coordinates
+    it into real TIB form via tib_from_state_space, which represents complex-conjugate
+    pairs as 2x2 real diagonal blocks. Optionally least-squares fits C so the realization
+    reproduces the impulse response.
+
+    Unlike msvdreduce / msvdreduce_fixed (which return (poles, null_vectors)), this returns
+    a *realization*: complex poles live inside 2x2 real blocks, not as scalar
+    (pole, null vector) pairs. Read the poles via ``la.eigvals(sys.A(dense=True))``
+    (complex-aware) -- NOT np.diag, which would give the real parts of the 2x2 blocks.
+    (NB: TIBStateSpace.poles() currently fails on a dense-backed A -- it runs la.eig on
+    the sparse form; use la.eigvals(sys.A(dense=True)) instead.)
+
+    Parameters
+    ----------
+    ir : np.ndarray, shape (p, q, L) = (outputs, inputs, lags).
+    order : reduced order; needs order <= min(p, q) * floor((L+1)/2), and L >~ 2*order.
+    fit_C : if True, also least-squares fit C (p x order) so C A^{k-1} B matches ir.
+    num_lags : lags used for the C fit (default: all L).
+
+    Returns
+    -------
+    sys : TIBStateSpace
+        Real, (block-)lower-triangular A_tib with A_tib A_tib^T + B_tib B_tib^T = I.
+        Real poles are 1x1 diagonal entries; complex-conjugate pairs are 2x2 real diagonal
+        blocks. Poles: la.eigvals(sys.A(dense=True)).
+    C : np.ndarray (p, order) or None
+        Fitted output matrix (only if fit_C).
+
+    Notes
+    -----
+    tib_from_state_space solves a discrete Lyapunov equation, so the shift A must be stable;
+    on clean IR it is, but a noisy IR can push the truncated shift's eigenvalues onto or
+    outside the unit circle.
+    """
+    from ga.reducers.balanced_truncation import tib_from_state_space
+    from ga.filters.tib import krylov_basis
+
+    do, di, num = ir.shape
+    k = int(np.floor((num + 1) / 2))
+    max_order = min(do, di) * k
+    if not (0 < order <= max_order):
+        raise ValueError(
+            f"order={order} exceeds the recoverable max {max_order} for L={num} "
+            f"(p={do}, q={di}); need a longer IR -- roughly L >= 2*order."
+        )
+
+    H = blkhankel(ir)
+    U, S, Vh = la.svd(H)
+    Vh = Vh[:order, :]
+    A = Vh[:, di:].dot(np.linalg.pinv(Vh[:, :-di]))   # dense shift; eig(A) = poles (real/complex)
+    B = Vh[:, :di]
+    sys, _ = tib_from_state_space(A, B)               # complex pairs -> 2x2 real diagonal blocks
+
+    C = None
+    if fit_C:
+        L = num if num_lags is None else num_lags
+        At, Bt = sys.A(dense=True), sys.B(dense=True)
+        K = np.asarray(krylov_basis(At, Bt, L)).reshape(At.shape[0], -1)   # (order, q*L)
+        C = np.real(ir[:, :, :L].reshape(do, -1) @ np.linalg.pinv(K))      # (p, order)
+
+    return sys, C
 
 

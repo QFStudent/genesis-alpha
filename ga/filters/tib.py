@@ -41,10 +41,10 @@ class TIBStateSpace:
         check = self._ensure_dense if dense else self._ensure_sparse
         return check(B)
     
-    def poles(self): 
-        A = self.A() 
+    def poles(self):
+        A = self.A(dense=True)    # la.eig needs a dense array; self.A() returns sparse
         ev = la.eig(A)[0]
-        return ev 
+        return ev
 
 
 def poles_chebyshev_roots(num_poles: int, a: float = 0.0, b: float = 1.0): 

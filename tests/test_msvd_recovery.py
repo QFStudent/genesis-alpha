@@ -15,11 +15,12 @@ it (double-deflation; see docs/derivations/03-null-vector-recovery.md).
 """
 
 import numpy as np
+import scipy.linalg as sla
 import pytest
 
 from ga.filters.tib import (null_basis_realization, build_tib_from_directions,
                             mimo_poles_to_ir, krylov_basis, poles_chebyshev_roots)
-from ga.reducers.hankel import (msvdreduce_fixed, msvdreduce_fast,
+from ga.reducers.hankel import (msvdreduce_fixed, msvdreduce_fast, msvdreduce_complex,
                                 BlockHankelOperator, blkhankel)
 
 
@@ -127,3 +128,51 @@ class TestFastMsvd:
         wd, _ = msvdreduce_fixed(target["ir"], target["n"])
         np.testing.assert_allclose(np.sort(np.real(wf)), np.sort(np.real(wd)), atol=1e-9)
         np.testing.assert_allclose(np.sort(np.real(wf)), np.sort(target["poles"]), atol=1e-9)
+
+
+def _rot(r, th):
+    return r * np.array([[np.cos(th), -np.sin(th)], [np.sin(th), np.cos(th)]])
+
+
+class TestMsvdComplex:
+    """msvdreduce_complex: IR -> real TIB via tib_from_state_space, for real OR complex poles."""
+
+    def test_real_poles_roundtrip(self, target):
+        sys, C = msvdreduce_complex(target["ir"], target["n"])
+        A, B = np.asarray(sys.A(dense=True)), np.asarray(sys.B(dense=True))
+        poles = np.sort(sla.eigvals(A).real)            # poles via eig, not the broken poles()
+        np.testing.assert_allclose(poles, np.sort(target["poles"]), atol=1e-8)
+        assert _relerr(_ir(A, B, C, target["lags"]), target["ir"]) < 1e-7
+        assert np.max(np.abs(A @ A.T + B @ B.T - np.eye(A.shape[0]))) < 1e-9
+
+    def test_complex_poles_roundtrip(self):
+        # real system with complex-conjugate poles, in a random basis (block structure hidden)
+        A0 = sla.block_diag(_rot(0.8, 0.5), _rot(0.6, 1.2), np.array([[0.3]]), _rot(0.7, 0.9))
+        m = A0.shape[0]
+        rng = np.random.default_rng(1)
+        T = rng.standard_normal((m, m)); A0 = T @ A0 @ sla.inv(T)
+        B0 = rng.standard_normal((m, 3)); C0 = rng.standard_normal((2, m)); L = 200
+        ir = np.zeros((2, 3, L)); Ak = np.eye(m)
+        for k in range(L):
+            ir[:, :, k] = C0 @ Ak @ B0; Ak = Ak @ A0
+
+        sys, C = msvdreduce_complex(ir, m)
+        A, B = np.asarray(sys.A(dense=True)), np.asarray(sys.B(dense=True))
+        rec = np.sort_complex(sla.eigvals(A))
+        true = np.sort_complex(sla.eigvals(A0))
+        np.testing.assert_allclose(rec, true, atol=1e-8)            # complex poles recovered
+        assert np.max(np.abs(np.imag(rec))) > 0.1                   # genuinely complex
+        assert _relerr(_ir(A, B, C, L), ir) < 1e-7                  # IR reproduced
+        assert np.max(np.abs(A @ A.T + B @ B.T - np.eye(m))) < 1e-9  # input-balanced
+        assert np.max(np.abs(np.triu(A, 2))) < 1e-9                 # block-lower-triangular (2x2 blocks)
+
+
+def test_tibstatespace_poles_dense():
+    # regression: TIBStateSpace.poles() must work on a dense-backed A
+    # (it used to call la.eig on the sparse form -> "object arrays are not supported").
+    poles = poles_chebyshev_roots(5, 0.0, 0.8)
+    rng = np.random.default_rng(0)
+    v = rng.standard_normal((3, 5)); v /= np.linalg.norm(v, axis=0)
+    sys = null_basis_realization(poles, v)
+    rec = np.sort(np.real(sys.poles()))          # must not raise
+    np.testing.assert_allclose(rec, np.sort(poles), atol=1e-9)
