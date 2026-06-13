@@ -259,14 +259,63 @@ input-balanced factor*; for the truncated factor it is the pseudo-inverse.
 > which drops the pole error to $2.37\times10^{-11}$. *(Status: this fix is present in
 > the working tree but uncommitted; not changed by these notes.)*
 
-**Recovering $B$ and $C$.** With $\widetilde V^{*}\approx[B\ AB\ \cdots]$, the input matrix
-is the first block,
+**Recovering $B$ — reading it off the controllability factor.** The identification
+$\widetilde V^{*}\approx\mathcal{C}=[\,B\ \ AB\ \ A^2B\ \cdots\ A^{k-1}B\,]$ (above) makes $B$
+immediate. The truncated factor $\widetilde V^{*}=\texttt{Vh[:order]}$ is $r\times qk$ (rows
+= right singular vectors = the $r$ reduced states; columns indexed by input-time). Partition
+its columns into $k$ **block-columns of width $q$** — one block per input lag:
 
-$$B = \widetilde V_{\,:,\,1:q},$$
+$$\widetilde V^{*} = \Big[\;\underbrace{\widetilde V^{*}_{[:,\,0:q]}}_{B}\;\Big|\;\underbrace{\widetilde V^{*}_{[:,\,q:2q]}}_{AB}\;\Big|\;\cdots\;\Big|\;\underbrace{\widetilde V^{*}_{[:,\,(k-1)q:kq]}}_{A^{k-1}B}\;\Big].$$
 
-(no extra $\Sigma^{1/2}$ scaling — Yu folds the singular values so that
-$\widetilde V^{*}$ *is* the controllability factor). In the code, `B = Q.T.dot(Vh[:, :di])`
-after the Schur rotation $Q$ of the next step. Finally $C$ is obtained by an $H_2$
+The $j$-th block is $A^{\,j}B$, so the **first block ($j=0$) is $B$ itself**:
+
+$$\boxed{\,B \;=\; \widetilde V^{*}_{[:,\,0:q]} \;=\; \texttt{Vh[:order, :di]}\,}\qquad (r\times q,\ \text{states}\times\text{inputs}).$$
+
+It is the first $q$ **columns** (one per input) — not rows, and **not** `Vh[:, di:]`: that
+*drops* the first block, and together with `Vh[:, :-di]` (drop the last block) it builds the
+**shift** $A=\widetilde V^{*}_{\rightarrow}(\widetilde V^{*}_{\leftarrow})^{+}$, not $B$.
+
+**Why $B$ and $A$ are consistent.** They must be read from the *same* factor or the pair is
+meaningless — and they are: $A$ is the column-shift of $\widetilde V^{*}$ and $B$ is its
+first column-block. Reconstructing $[\,B\ AB\ \cdots]$ from the recovered $(A,B)$ returns
+$\widetilde V^{*}$ (to SVD/truncation error), so the pair realizes the data and
+$\operatorname{eig}(A)$ are the poles.
+
+**Why there is no $\Sigma^{1/2}$ on $B$ (a convention).** Here $\widetilde V^{*}$ is taken
+*directly* as $\mathcal{C}$ — all of $\Sigma$ folded into the observability side,
+$\mathcal{O}=\widetilde U\widetilde S$ — the **input-balanced** choice, for which
+$\mathcal{C}\mathcal{C}^{*}=\widetilde V^{*}\widetilde V=I$ (§ "That realization is
+input-balanced"). So $B=\widetilde V^{*}_{[:,0:q]}$ carries **no** $\Sigma^{1/2}$. The
+*standard internally-balanced ERA* instead splits the energy,
+$\mathcal{C}=\Sigma^{1/2}\widetilde V^{*}$, $\mathcal{O}=\widetilde U\Sigma^{1/2}$, giving
+$B=\Sigma^{1/2}\widetilde V^{*}_{[:,0:q]}$ with a $\Sigma^{-1/2}$-scaled shift. Both realize
+the **same transfer function** (a coordinate choice — cf. § "Coordinate choice vs.
+reduction"); the only rule is to **pair a scaled $B$ with the matching scaled $A$** — mixing
+an un-scaled $B$ with a $\Sigma$-scaled $A$ is the bug. The un-scaled pair used here is the
+natural one because $\widetilde V^{*}$ is *already* the controllability matrix.
+
+**Two coordinate frames — why the code shows `Q.T @ Vh[:, :di]`, not `Vh[:, :di]`.** This
+looks like a contradiction but isn't: it is the *same* $B$ in two frames, and the only
+difference is the Schur rotation $Q$, applied to **both** $A$ and $B$.
+
+- **$\widetilde V^{*}$ frame (the box above).** $B=\texttt{Vh[:, :di]}$ paired with the
+  *dense* shift $A=\widetilde V^{*}_{\rightarrow}(\widetilde V^{*}_{\leftarrow})^{+}$.
+- **Schur frame (what `msvdreduce` uses).** `msvdreduce` calls `lschur` to make $A$
+  lower-triangular, $A=Q\,A_1\,Q^{\mathsf T}$ — a state change of coordinates
+  $\tilde x=Q^{\mathsf T}x$. By the similarity rule (§7), rotating the state rotates *both*
+  matrices together:
+
+$$(A,\,B)\ \xmapsto{\ \tilde x=Q^{\mathsf T}x\ }\ \big(Q^{\mathsf T}AQ,\ Q^{\mathsf T}B\big)=\big(A_1,\ \texttt{Q.T @ Vh[:, :di]}\big).$$
+
+So `Q.T @ Vh[:, :di]` is the **same $B$, rotated into the Schur frame** — it *must* be
+rotated because $A$ was. The invariant is simply **$B$'s rotation always matches $A$'s**:
+`msvdreduce` rotates **both** by $Q$ (it needs the lower-triangular $A_1$ for the diagonal
+pole read-off and the scalar deflation) → `B = Q.T @ Vh[:, :di]`; the un-rotated route
+(keep the dense $A$, e.g. to hand it to `tib_from_state_space`) rotates **neither** →
+`B = Vh[:, :di]`. $Q$ is just an orthogonal relabeling of the state basis — poles, transfer
+function and IR are unchanged (a coordinate choice, § "Coordinate choice vs. reduction").
+
+Finally $C$ is obtained by an $H_2$
 least-squares fit in the reduced Krylov basis (eqs 454–455):
 
 $$K = \begin{bmatrix}B & AB & \cdots & A^{k-1}B\end{bmatrix},\qquad C = \begin{bmatrix}h_1 & h_2 & \cdots & h_k\end{bmatrix}K^{*}.$$
@@ -366,12 +415,41 @@ operating on different inputs. BT is the subject of `Mu2026-ModelReductionNotes`
 > data, `msvdreduce` is the natural entry point; BT applies once a model exists and
 > carries the provable $H_\infty$ bound.
 
-**Error-norm caveat.** BT targets $H_\infty$ (worst-case frequency gain) with a hard
-$2\sum\sigma_i$ bound; `msvdreduce`/Hankel-SVD targets $H_2$ / Hankel norm via the
-interpolation conditions of §6.1 (Walsh's theorem: the $H_2$-optimal reduced model
-interpolates $H$ at the reflected poles $1/\bar z_k$, eqs 417–419; the MIMO
-*tangential* version is Thm 41 / Lemma 42). They generally produce different reduced
-models even at the same order. See `concepts/ModelReduction` for the wiki summary.
+**Which norm does Hankel-SVD minimize? (The Hankel norm — *not* $H_\infty$.)** A common
+confusion: $H_\infty$ is *balanced truncation*'s guaranteed **bound**
+($\lVert G-G_r\rVert_\infty \le 2\sum_{k>r}\sigma_k$), **not** what Hankel-SVD optimizes.
+The norm natural to Hankel-SVD is the **Hankel norm** — the operator (spectral) norm of the
+Hankel operator,
+
+$$\|G\|_H = \|\Gamma\|_2 = \sigma_1(H),$$
+
+the largest Hankel singular value, i.e. the maximum past-input → future-output **energy
+gain** (§2–§3; `concepts/ModesAndHankel`). Two flavors:
+
+- **Optimal Hankel-norm approximation (AAK, Adamjan–Arov–Krein):** minimizes the Hankel
+  norm of the error *exactly*, $\;\min_{\deg\hat G\le r}\lVert G-\hat G\rVert_H = \sigma_{r+1}$.
+- **Plain SVD-truncation of the Hankel matrix (Ho–Kalman / ERA / `msvdreduce`):** the
+  truncation is **Eckart–Young optimal for the Hankel *matrix*** — it discards the least
+  energy, $\lVert H-H_r\rVert_2=\sigma_{r+1}$ and $\lVert H-H_r\rVert_F=\sqrt{\sum_{k>r}\sigma_k^2}$ —
+  then realizes from the dominant subspace. That is a *matrix* optimum (least energy
+  dropped), not a transfer-function-norm optimum; via the impulse-response fit it ends up
+  approximately **$H_2$** (Walsh / tangential interpolation, §6.1, eqs 417–419 / Thm 41 /
+  Lemma 42; Yu: "small $H_2$, but not minimal").
+
+| method | error-norm behaviour |
+|---|---|
+| optimal Hankel-norm (AAK) | **minimizes the Hankel norm** $=\sigma_{r+1}$ |
+| Hankel-matrix SVD truncation (`msvdreduce` / ERA) | **minimizes discarded energy** $\sum_{k>r}\sigma_k^2$ (Eckart–Young); $\approx H_2$ via the IR fit |
+| balanced truncation | minimizes *nothing* optimally; carries the **$H_\infty$ bound** $2\sum_{k>r}\sigma_k$ |
+| IRKA / Walsh | locally **minimizes $H_2$** |
+
+The norms are ordered $\;\lVert\cdot\rVert_H \le \lVert\cdot\rVert_\infty \le 2\sum_k\sigma_k$,
+so controlling the Hankel norm (or the dropped energy) loosely controls $H_\infty$ too —
+which is why every method here ranks and truncates on the **same** Hankel singular values,
+yet they generally produce *different* reduced models at the same order. So: Hankel-SVD
+minimizes the **Hankel norm / discarded energy**, $H_2$ is what IRKA (and approximately the
+`msvdreduce` IR fit) targets, and $H_\infty$ is BT's *bound* — not the Hankel-SVD objective.
+See `concepts/ModelReduction` for the wiki summary.
 
 ## 7. The Schur step in detail: `B = Qᵀ B`, and why it isn't yet TIB
 

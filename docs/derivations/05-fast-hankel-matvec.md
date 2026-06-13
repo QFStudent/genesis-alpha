@@ -141,12 +141,15 @@ solves**, while dense direct factorizations get nothing.
 
 > **Implementation-note — `reduce_fft_truncate` bugs.** The SISO
 > `reduce_fft_truncate(h, p)` builds `FastHankelProduct(h)` and runs `eigsh`:
-> - **`dtype='float32'` (default in `FastHankelProduct.__init__`)** — the FFT actually
->   computes in float64, but `eigsh` trusts the declared dtype and iterates in single
->   precision, costing ~5–6 digits: pole error $6.4\times10^{-4}$ vs the dense
->   `reduce_svd_truncate`'s $6.0\times10^{-9}$. Declaring float64 recovers
->   $5.4\times10^{-9}$. **This is the primary bug.**
-> - **Triangular Hankel** (§4 note) — inherited; corrupts slow-decay / tail-heavy IRs.
+> - **`dtype='float32'` (was the default in `FastHankelProduct.__init__`)** — the FFT
+>   actually computes in float64, but `eigsh` trusted the declared dtype and iterated in
+>   single precision, costing ~5–6 digits (pole error $\sim\!10^{-4}$ vs the dense
+>   `reduce_svd_truncate`'s $\sim\!10^{-6}$–$10^{-7}$). This was the **primary bug**;
+>   **fixed 2026-06-08** — the default is now `float64`, and `reduce_fft_truncate`
+>   recovers $\sim\!10^{-7}$, on par with the dense path.
+> - **Triangular Hankel** (§4 note) — *still* present in `FastHankelProduct` (it encodes
+>   the single-arg Hankel by design); inherited by `reduce_fft_truncate`, so it corrupts
+>   slow-decay / tail-heavy IRs. The fully-populated `BlockHankelOperator` avoids it.
 >
 > The eigenvector shift `A = v.T[:p,1:] @ v[:-1,:p]` itself is fine for the symmetric
 > Hankel (its eigenvectors are the singular vectors up to sign). The corrected fast
