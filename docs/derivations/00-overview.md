@@ -9,6 +9,8 @@ notes derive, in one consistent notation, the three pieces and how they connect:
 | [`02-null-basis-realization.md`](02-null-basis-realization.md) | `null_basis_realization` review; why its Blaschke deflation **is** Gram–Schmidt; its connection to `msvdreduce` | "What does the forward map do, and why is the deflation an orthogonalization?" |
 | [`03-null-vector-recovery.md`](03-null-vector-recovery.md) | Recovering the null structure from a reduced model: `msvdreduce` vs `tib_from_state_space` | "Two routes to TIB from a reduced realization, and how they relate." |
 | [`04-system-norms-and-h2-optimality.md`](04-system-norms-and-h2-optimality.md) | Background: $\ell^2$ / $H^2$ / $H^\infty$ norms, and why $H_2$ is a sub-optimal reduction objective | "What do these norms mean, and why prefer information distance / Hankel norm over $H_2$?" |
+| [`05-fast-hankel-matvec.md`](05-fast-hankel-matvec.md) | FFT block-Hankel matvec and how it makes the partial SVD fast | "How is the Hankel SVD computed without forming $H$?" |
+| [`06-real-realization-complex-poles.md`](06-real-realization-complex-poles.md) | Keeping the null-basis realization **real** for complex poles (magnitude + rotation); why only $A$ is rotated; the Givens connection | "How do complex poles give a real `(A,B)`, and why isn't $B$ rotated?" |
 
 ## Primary sources
 

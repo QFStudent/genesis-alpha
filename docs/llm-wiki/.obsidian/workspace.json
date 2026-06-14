@@ -4,17 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "150585ce0de40861",
+        "id": "92286a6fcd148d8d",
         "type": "tabs",
         "children": [
           {
-            "id": "7acb2bbd1649dacc",
+            "id": "a426079bd976373c",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Graph view"
+              "type": "markdown",
+              "state": {
+                "file": "wiki/papers/Olivi2010-LosslessParametrization.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Olivi2010-LosslessParametrization"
             }
           }
         ]
@@ -176,18 +180,35 @@
       "bases:Create new base": false
     }
   },
-  "active": "7acb2bbd1649dacc",
+  "active": "a426079bd976373c",
   "lastOpenFiles": [
+    "wiki/concepts/OHLCVPooledPrediction.md",
+    "wiki/concepts/MarketIntradayMomentum.md",
+    "wiki/papers/Baltussen2020-IntradayMomentumHedging.md",
+    "2026-06-01.md",
+    "index.md.tmp.1965.205e24021dd5",
+    "wiki/concepts/SysIDReturnPrediction.md.tmp.1965.cf59dc775a14",
+    "wiki/papers/PillonettoDeNicolao2010-KernelSysID.md",
+    "wiki/papers/Olivi2010-LosslessParametrization.md",
+    "wiki/papers/MullhauptRiedel2003-TIBBandMatrix.md",
+    "wiki/papers/Mu2026-NullBasisProofs.md",
+    "wiki/papers/Kong2018-TIBInfoGeometry.md",
+    "wiki/papers/HanzonOliviPeeters2010-TangentialSchur.md",
+    "raw/PilloDeNico-Automatica-2010-A-new-kernel-based-approach.pdf",
+    "wiki/papers/Mu2026-ModelReductionNotes.md",
+    "Untitled.canvas",
+    "raw/heding demand and market intraday momentum.pdf",
+    "raw/null_basis_rep_proofs.pdf",
+    "log.md.tmp.1965.68fc4974eefd",
+    "wiki/concepts/PyMORDataDrivenID.md.tmp.1965.127b1b811b47",
+    "wiki/concepts/PyMORDataDrivenID.md",
+    "wiki/concepts/TIBForm.md.tmp.1965.dd70c0410601",
     "wiki/concepts/MarketImpact.md",
     "log.md",
     "index.md",
     "CLAUDE.md",
     "wiki/strategies",
     "wiki/papers",
-    "wiki/entities",
-    "wiki/concepts",
-    "wiki",
-    "raw",
     "Market Impact.md",
     "Welcome.md"
   ]

@@ -159,4 +159,5 @@ correct pole-dependent weighting elsewhere.
 
 - [`01-hankel-svd-reduction.md`](01-hankel-svd-reduction.md) — `msvdreduce`, the reduction this feeds.
 - [`03-null-vector-recovery.md`](03-null-vector-recovery.md) — the inverse pass (the `u`-loop) and its bug.
+- [`06-real-realization-complex-poles.md`](06-real-realization-complex-poles.md) — keeping this forward map **real** for complex poles (magnitude + rotation; why only $A$ is rotated).
 - `concepts/TIBForm`, `concepts/BlaschkeFactor`, `papers/Mu2026-NullBasisProofs`.

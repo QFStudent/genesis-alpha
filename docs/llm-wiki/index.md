@@ -2,7 +2,7 @@
 
 *The LLM updates this on every ingest. Read this first before answering any query — use it to find relevant pages, then drill in.*
 
-Last updated: 2026-06-13 | Pages: 21 | Derivations: 6 | Sources ingested: 7
+Last updated: 2026-06-13 | Pages: 21 | Derivations: 7 | Sources ingested: 7
 
 ---
 
@@ -46,6 +46,7 @@ Last updated: 2026-06-13 | Pages: 21 | Derivations: 6 | Sources ingested: 7
 - [03 — Null-vector recovery](../derivations/03-null-vector-recovery.md) — `msvdreduce` (tangential-Schur) vs `tib_from_state_space`; rebuild directly from `(poles, y)` — do **not** re-deflate
 - [04 — System norms & H₂ optimality](../derivations/04-system-norms-and-h2-optimality.md) — ℓ²/H²/H∞ definitions and relationships; why H₂ is a sub-optimal reduction objective (information distance / cepstrum)
 - [05 — Fast Hankel matvec (FFT)](../derivations/05-fast-hankel-matvec.md) — `O(k log k)` Hankel matvec (reversal → convolution → FFT), block extension, Lanczos partial SVD; `reduce_fft_truncate` float32 / triangular-Hankel bugs
+- [06 — Real realization for complex poles](../derivations/06-real-realization-complex-poles.md) — magnitude+rotation construction (`null_basis_realization_real`); why only `A` is rotated (orthogonal `Q` cancels in `AA*+BB*=I`, `B` untouched); the Givens connection (one-sided to place a pair vs. two-sided similarity to preserve)
 
 ---
 

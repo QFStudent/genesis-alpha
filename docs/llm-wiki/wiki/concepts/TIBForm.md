@@ -2,7 +2,7 @@
 type: concept
 tags: [execution, market-impact, factor-model]
 sources: [Kong2018-TIBInfoGeometry]
-updated: 2026-06-07
+updated: 2026-06-13
 ---
 
 # Triangular Input Balanced (TIB) Form
@@ -19,12 +19,12 @@ A = M⁻¹ N Q
   - c = 1/√(1 - |λ|²), s = λc
   - M = diag(1/c) · bidiag(s*, c) · signature S
   - N = diag(1/c) · bidiag(c, s) · signature S
-- **Q**: block-diagonal rotation matrix that keeps all entries real even for complex conjugate pole pairs (2×2 Givens blocks)
+- **Q**: block-diagonal rotation matrix that keeps all entries real even for complex conjugate pole pairs (2×2 Givens blocks) — applied to `A` only, never `U`/`B`, because it is orthogonal and cancels in the balance identity `A A* + B B* = I` (see derivation 06)
 - **U**: null-vector matrix encoding input directions (rows of U[:q,:] are unitary)
 
 The name "Triangular Input Balanced" refers to the triangular structure of the input null vectors and the balanced (information-geometric) parameterisation.
 
-> 📐 **Full derivations:** the forward map and why its Blaschke deflation **is** Gram–Schmidt — `docs/derivations/02-null-basis-realization.md`; null-vector recovery, `msvdreduce` vs `tib_from_state_space` — `docs/derivations/03-null-vector-recovery.md`.
+> 📐 **Full derivations:** the forward map and why its Blaschke deflation **is** Gram–Schmidt — `docs/derivations/02-null-basis-realization.md`; null-vector recovery, `msvdreduce` vs `tib_from_state_space` — `docs/derivations/03-null-vector-recovery.md`; how the rotation `Q` keeps `A` real for complex poles, why `B` is **not** rotated, and the Givens connection — `docs/derivations/06-real-realization-complex-poles.md`.
 
 ## Intuition: how `null_basis_realization` builds the system
 

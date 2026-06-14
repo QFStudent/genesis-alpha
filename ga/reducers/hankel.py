@@ -297,6 +297,57 @@ def msvdreduce_fixed(ir: np.ndarray, order: int):
     return w, u
 
 
+def msvdreduce_eig(ir: np.ndarray, order: int):
+    """
+    Eigenvalue-based companion to msvdreduce_fixed, for systems with COMPLEX poles.
+
+    msvdreduce_fixed reads the poles off the real-Schur (lschur) diagonal, so a
+    complex-conjugate pair r*e^{+-i*theta} comes back as the doubled real part Re(pole) --
+    the imaginary part is lost, because a real-Schur 2x2 block has real diagonal entries
+    and np.diag skips the off-diagonal where the imaginary part lives. This version uses
+    the COMPLEX Schur form instead: its (triangular) diagonal holds the eigenvalues in
+    order, so complex poles are recovered exactly, and the same tangential-Schur deflation
+    (Yu eqs 452-453) runs with the complex poles to peel off the null vectors.
+
+    Returns (w, u): complex poles and orthonormal (complex) null vectors, in complex-Schur
+    order (conjugate pairs are not necessarily adjacent). The directions are in the modal
+    (complex-Schur) frame, NOT the magnitude frame that build_tib_from_directions_real
+    rebuilds in -- for a real end-to-end realization use msvdreduce_complex
+    (tib_from_state_space). This function fixes the *poles*; the null-vector frame
+    standardization is separate.
+
+    Parameters:
+        ir: impulse response, shape (p, q, L) = (outputs, inputs, lags).
+        order: number of poles to recover.
+
+    Returns:
+        w: poles, shape (order,) -- complex, recovered from the eigenvalues.
+        u: orthonormal null vectors, shape (q, order) -- columns are unit vectors.
+    """
+    do, di, num_ir = ir.shape
+    H = blkhankel(ir)
+
+    U, S, Vh = la.svd(H)
+    Vh = Vh[:order, :]
+    A = Vh[:, di:].dot(np.linalg.pinv(Vh[:, :-di]))   # real shift
+    T, Z = la.schur(A, output="complex")              # eigenvalues on the diagonal of T
+    A = T[::-1, ::-1]                                  # flip to lower-triangular (mirror lschur)
+    Q = Z[:, ::-1]
+    B = Q.conj().T.dot(Vh[:, :di])
+    w = np.diag(A)                                    # poles = eigenvalues (complex), in order
+    u = np.zeros((di, order), dtype=complex)
+
+    for i in range(order):
+        ui = B[0] / np.linalg.norm(B[0], ord=2)
+        u[:, i] = ui
+        if B.shape[0] > 1:                            # apply J_i^{-1} to the remaining rows
+            Jinv = np.eye(di) - (1.0 + 1.0/np.conj(w[i])) * np.outer(ui, np.conj(ui))
+            B = B[1:, :].dot(Jinv)
+        else:
+            B = B[1:, :]
+    return w, u
+
+
 def _scalar_hankel_matvec_fft(g, x, k):
     """
     Fast scalar Hankel matvec via FFT: returns H @ x where H[i, j] = g[i + j]
@@ -417,10 +468,9 @@ def msvdreduce_complex(ir: np.ndarray, order: int, fit_C: bool = True, num_lags:
 
     Unlike msvdreduce / msvdreduce_fixed (which return (poles, null_vectors)), this returns
     a *realization*: complex poles live inside 2x2 real blocks, not as scalar
-    (pole, null vector) pairs. Read the poles via ``la.eigvals(sys.A(dense=True))``
-    (complex-aware) -- NOT np.diag, which would give the real parts of the 2x2 blocks.
-    (NB: TIBStateSpace.poles() currently fails on a dense-backed A -- it runs la.eig on
-    the sparse form; use la.eigvals(sys.A(dense=True)) instead.)
+    (pole, null vector) pairs. Read the poles via ``sys.poles()`` -- NOT np.diag, which
+    would give the real parts of the 2x2 blocks. sys.poles() returns real poles for a real
+    system and complex-conjugate pairs only when genuinely complex.
 
     Parameters
     ----------
