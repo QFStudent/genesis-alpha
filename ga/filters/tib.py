@@ -605,5 +605,41 @@ def mimo_poles_to_ir(lambd: NDArray[complex], v: NDArray[complex], C: NDArray[fl
     tib_sys = null_basis_realization(lambd, v)
     K = krylov_basis(tib_sys.A(), tib_sys.B(), m)
     ir = np.tensordot(C, K, (-1, 0))
-    return ir 
+    return ir
+
+
+def mimo_ar2ir(ar_coeffs: np.ndarray, m: int) -> np.ndarray:
+    """
+    Multivariate (MIMO) AR coefficients -> impulse response.
+
+    Forward impulse response of the VAR inverse filter A(z)^{-1}, where
+    A(z) = I - sum_{k>=1} A_k z^{-k} is the whitening polynomial of a vector
+    autoregression y_t = sum_k A_k y_{t-k} + e_t. Block analog of the scalar ar2ir: it
+    expands A(z)^{-1} via the block lower-triangular Toeplitz recursion (VAR -> VMA)
+
+        h_0 = I,    h_n = sum_{k=1}^{n} A_k h_{n-k}    (A_k = 0 for k > p),
+
+    each h_n a (d, d) matrix. Reduces to the scalar ar2ir when d = 1.
+
+    Parameters:
+        ar_coeffs: matrix AR coefficients A_1, ..., A_p, shape (p, d, d) -- one (d, d)
+            block per lag (e.g. the CA^{k-1}B sequence of a self-prediction TIB model).
+        m: number of impulse-response matrices to return (h_0 ... h_{m-1}).
+
+    Returns:
+        h: impulse response of A(z)^{-1}, shape (m, d, d), with h[0] = I.
+    """
+    ar = np.asarray(ar_coeffs)
+    if ar.ndim != 3 or ar.shape[1] != ar.shape[2]:
+        raise ValueError(f"ar_coeffs must have shape (p, d, d). Got {ar.shape}.")
+    p, d, _ = ar.shape
+
+    h = np.zeros((m, d, d), dtype=np.result_type(ar.dtype, float))
+    h[0] = np.eye(d)
+    for n in range(1, m):
+        acc = np.zeros((d, d), dtype=h.dtype)
+        for k in range(1, min(n, p) + 1):
+            acc += ar[k - 1] @ h[n - k]
+        h[n] = acc
+    return h
 

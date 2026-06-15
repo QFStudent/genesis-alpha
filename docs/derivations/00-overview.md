@@ -11,6 +11,7 @@ notes derive, in one consistent notation, the three pieces and how they connect:
 | [`04-system-norms-and-h2-optimality.md`](04-system-norms-and-h2-optimality.md) | Background: $\ell^2$ / $H^2$ / $H^\infty$ norms, and why $H_2$ is a sub-optimal reduction objective | "What do these norms mean, and why prefer information distance / Hankel norm over $H_2$?" |
 | [`05-fast-hankel-matvec.md`](05-fast-hankel-matvec.md) | FFT block-Hankel matvec and how it makes the partial SVD fast | "How is the Hankel SVD computed without forming $H$?" |
 | [`06-real-realization-complex-poles.md`](06-real-realization-complex-poles.md) | Keeping the null-basis realization **real** for complex poles (magnitude + rotation); why only $A$ is rotated; the Givens connection | "How do complex poles give a real `(A,B)`, and why isn't $B$ rotated?" |
+| [`07-mimo-ar-to-ir.md`](07-mimo-ar-to-ir.md) | Multivariate `ar2ir`: matrix AR coefficients → impulse response (`T_H T_𝒜 = I`, `H = 𝒜⁻¹`, block recursion `h_n = Σ A_k h_{n-k}`); fills the note's "MIMO: pass" | "How do you convert MIMO AR coefficients to the IR, and why?" |
 
 ## Primary sources
 

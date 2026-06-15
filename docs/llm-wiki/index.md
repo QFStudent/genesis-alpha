@@ -2,7 +2,7 @@
 
 *The LLM updates this on every ingest. Read this first before answering any query — use it to find relevant pages, then drill in.*
 
-Last updated: 2026-06-13 | Pages: 21 | Derivations: 7 | Sources ingested: 7
+Last updated: 2026-06-14 | Pages: 23 | Derivations: 8 | Sources ingested: 8
 
 ---
 
@@ -16,6 +16,7 @@ Last updated: 2026-06-13 | Pages: 21 | Derivations: 7 | Sources ingested: 7
 - [[wiki/papers/Olivi2010-LosslessParametrization|Olivi 2010 — Lossless Parametrization (HDR)]] — exact definition of Blaschke-Potapov factor B_{w,u}(z) (eq 1.11) matching the code; unit-vector-in-kernel requirement
 - [[wiki/papers/PillonettoDeNicolao2010-KernelSysID|Pillonetto & De Nicolao 2010 — Kernel-Based System ID]] — stable spline kernel; nonparametric Bayesian IR estimation with marginal-likelihood hyperparameters; foundation of the kernel/Bayesian method and Bayesian-TIB fusion
 - [[wiki/papers/Baltussen2020-IntradayMomentumHedging|Baltussen et al. 2020 — Intraday Momentum & Hedging]] — market intraday momentum everywhere (60+ futures); gamma-hedging mechanism; r_ROD predicts r_LH then reverts over days
+- [[wiki/papers/Mu2026-TIBNote|Mu 2026 — TIB Note]] — TIB theory notes: orthonormal Blaschke bases, band-fraction filter `A=M⁻¹N`, H₂/H∞ criteria, and the **functions-of-Toeplitz** AR↔IR derivation (`T_h T_a = I`, `ar2ir` = `T_a h = e₁`); source for [[wiki/concepts/VARSelfPrediction]], MIMO case ("pass") filled by `mimo_ar2ir`
 
 ---
 
@@ -33,6 +34,7 @@ Last updated: 2026-06-13 | Pages: 21 | Derivations: 7 | Sources ingested: 7
 - [[wiki/concepts/ModesAndHankel|Modes, poles, null vectors & the Hankel matrix]] — precise definitions: mode = (pole, null vector); state-space eigenvector vs null vector; modal IR decomposition; poles = shift-operator eigenvalues (not Hankel eigenvalues), HSVs = mode energies
 - [[wiki/concepts/FuturesCovariates|Futures Prediction Covariates]] — per-instrument covariates for ES/NQ/YM/DM/TY/FV/VX/URO/JY in the TIB MIMO model; shared raw/vol-normalized inputs, cross-asset blocks, ES–YM (and intra-block) lead–lag / error-correction
 - [[wiki/concepts/EnergyBasedCovariateSelection|Energy-Based Covariate Selection]] — principled input selection by *predictable* (not raw IR) energy: CCA/subspace predictable-energy spectrum, Hankel-σ contribution, CV group partial-R², group-LASSO + reduced-rank
+- [[wiki/concepts/VARSelfPrediction|(V)AR Self-Prediction]] — the TIB state-space as an inverse/whitening filter when input=output=data: `CAⁿB` are square (V)AR coefficients (not the forward IR); LPC/lattice/Schur connection; `ar2ir` (and its MIMO block recursion) maps AR coeffs → forward IR; minimum-phase caveat
 
 ---
 
@@ -47,6 +49,7 @@ Last updated: 2026-06-13 | Pages: 21 | Derivations: 7 | Sources ingested: 7
 - [04 — System norms & H₂ optimality](../derivations/04-system-norms-and-h2-optimality.md) — ℓ²/H²/H∞ definitions and relationships; why H₂ is a sub-optimal reduction objective (information distance / cepstrum)
 - [05 — Fast Hankel matvec (FFT)](../derivations/05-fast-hankel-matvec.md) — `O(k log k)` Hankel matvec (reversal → convolution → FFT), block extension, Lanczos partial SVD; `reduce_fft_truncate` float32 / triangular-Hankel bugs
 - [06 — Real realization for complex poles](../derivations/06-real-realization-complex-poles.md) — magnitude+rotation construction (`null_basis_realization_real`); why only `A` is rotated (orthogonal `Q` cancels in `AA*+BB*=I`, `B` untouched); the Givens connection (one-sided to place a pair vs. two-sided similarity to preserve)
+- [07 — MIMO AR ↔ IR (`mimo_ar2ir`)](../derivations/07-mimo-ar-to-ir.md) — full multivariate `ar2ir`: block-Toeplitz duality `T_H T_𝒜 = I`, `H(z)=𝒜(z)⁻¹`, recursion `h₀=I, hₙ=Σ Aₖhₙ₋ₖ` (left=right verified), block solve `T_𝒜 h = E₁`; fills the "MIMO: pass" in [[wiki/papers/Mu2026-TIBNote]]; validation table
 
 ---
 
