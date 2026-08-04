@@ -2,7 +2,7 @@
 
 *The LLM updates this on every ingest. Read this first before answering any query — use it to find relevant pages, then drill in.*
 
-Last updated: 2026-06-14 | Pages: 23 | Derivations: 8 | Sources ingested: 8
+Last updated: 2026-08-03 | Pages: 24 | Derivations: 8 | Sources ingested: 8
 
 ---
 
@@ -67,4 +67,4 @@ Last updated: 2026-06-14 | Pages: 23 | Derivations: 8 | Sources ingested: 8
 
 ## Syntheses
 
-*(none yet — filed when a query produces a substantive multi-paper answer)*
+- [[wiki/syntheses/SchlichtVC-ProdSimReplication|Schlicht VC vs Prod TOD-MISO “VC” — Replication Notes]] — two distinct “VC” objects (Schlicht `VC.m` vs prod `calc_tv_coefficients` TOD stack); `ga/vc/` vs `ga/sim/` mapping; replication confidence and open gaps (`calc_tv_coefficients` stub)
