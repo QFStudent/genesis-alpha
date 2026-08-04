@@ -53,6 +53,19 @@ The eigenvalues of $A_{\text{mag}}Q$ become the conjugate pairs, $B$ is unchange
 and (§4) the input balance is preserved. Verified: pole error $\sim10^{-15}$,
 $\lVert AA^{\mathsf T}+BB^{\mathsf T}-I\rVert\sim10^{-16}$, $\operatorname{Im}h_k=0$.
 
+**Intuition — radial × angular.** A complex pole carries two pieces of information, and
+the construction supplies them in two separate, real-valued stages:
+
+- the **radial stage** sets each mode's *magnitude* $|\lambda|$ — its decay rate — but puts
+  the pair on the **positive real axis** ($\{r,r\}$, no oscillation);
+- the **rotation** then supplies the *angle* $\theta$: it **spins** each pair's 2-D
+  coordinate block until the two coincident real eigenvalues $\{r,\,r\}$ **split off the axis**
+  into the conjugate pair $\{r\,e^{i\theta},\,r\,e^{-i\theta}\}$.
+
+Magnitude $\to$ decay, rotation $\to$ oscillation; together they place the pole at
+$r\,e^{\pm i\theta}$ while every matrix stays real. Nothing is ever complex — the complex
+poles exist only as *eigenvalues* of the real $A$, sitting inside its $2\times2$ blocks.
+
 ## 3. The rotation angle (read off the realized block)
 
 $A_{\text{mag}}Q$ is block-lower-triangular ($A_{\text{mag}}$ lower-triangular, $Q$
@@ -82,6 +95,38 @@ Two points:
   because its *bidiagonal* construction has a fixed coupling ($x=-0.51$ in one test).
   The SISO closed form and the $x$-based formula are the two branches of the same
   equation $2r\cos\psi-x\sin\psi=2r\cos\theta$; both land on the same conjugate pair.
+
+### Where does the imaginary part go? A rotation *is* real complex multiplication
+
+The construction never writes a complex number, yet the eigenvalues come out complex — because
+a **rotation is the real-coordinate representation of complex multiplication.** Identify
+$\mathbb{C}\cong\mathbb{R}^2$ ($a+ib \leftrightarrow (a,b)$); then multiplication by
+$z = a+ib = r\,e^{i\theta}$ acts on $\mathbb{R}^2$ as the *real* matrix
+
+$$z \;\longleftrightarrow\; \begin{bmatrix} a & -b \\ b & a\end{bmatrix}
+  = r\begin{bmatrix}\cos\theta & -\sin\theta\\ \sin\theta & \cos\theta\end{bmatrix},
+  \qquad \det\!\big(\mu I-\cdot\big)=(\mu-a)^2+b^2 \;\Rightarrow\; \mu = a\pm ib = r\,e^{\pm i\theta}.$$
+
+In particular the imaginary unit $i$ (a $90^\circ$ turn) $\leftrightarrow \big[\begin{smallmatrix}0&-1\\1&0\end{smallmatrix}\big]$.
+So the imaginary part $b=r\sin\theta$ is carried as the **antisymmetric off-diagonal** of a real
+block — *geometry* (a turn), not the symbol $i$. There is no complex part to "remove": it was
+never written as a complex number; it lives in the real off-diagonal structure.
+
+This is why the magnitude block — off-diagonals $0$ and $x$, no antisymmetry, eigenvalues
+$\{r,r\}$ (real) — acquires complex eigenvalues after $\cdot\,G(\psi)$: the rotation introduces
+the off-diagonal antisymmetry ($-r\sin\psi$ appears above the diagonal), pushing the pair off the
+real axis to $r\,e^{\pm i\theta}$. The rotation **injects** the angle into a real matrix; nothing
+is subtracted.
+
+**Why a pair (a $2\times2$ block).** A real matrix has a *real* characteristic polynomial, so
+complex eigenvalues occur only in **conjugate pairs** — you cannot give a real matrix a lone
+complex eigenvalue, it always brings its conjugate. Hence each pair
+$\{r\,e^{i\theta},\,r\,e^{-i\theta}\}$ must share one $2\times2$ real block (the
+$\big[\begin{smallmatrix}a&-b\\b&a\end{smallmatrix}\big]$ shape, up to similarity by the
+within-pair coupling $x$). This is also why the radial stage keeps conjugate pairs *adjacent*.
+Contrast `null_basis_realization`, which writes the pole on the diagonal ($A_{kk}=\lambda_k$, a
+complex entry); the rotation trick refuses that representation and builds the real block whose
+eigenvalues *are* $\lambda,\bar\lambda$ — same poles, no complex entries.
 
 ## 4. Why only $A$ is rotated, never $B$
 

@@ -23,6 +23,21 @@ is the defining difference from Balanced Truncation (§5). `msvdreduce` is a
 *realize-then-reduce* method: it builds a state space directly from the data Hankel
 matrix.
 
+> **Feedthrough caveat — the Hankel starts at $CB$, not $D$.** The Markov parameters above
+> start at $h_1=CB$ ($k=1$), and the block Hankel (§2) is built from $h_1,h_2,\dots$ **only**.
+> A system with a **feedthrough** $D$ (output $y_t=Cx_t+D u_t$ — e.g. $y_t=Cx_t+u_t\Rightarrow
+> D=I$) has an extra **lag-0** term $h_0=D$ in its impulse response, so the IR array is
+> $\mathrm{ir}=[\,D,\ CB,\ CAB,\ \dots\,]$. That $h_0=D$ is **static (no dynamics) and is *not*
+> part of the Hankel** — it is recovered separately as $D=\mathrm{ir}[0]$. Concretely:
+> - **strictly proper** ($D=0$): $\mathrm{ir}[0]=CB$ → feed the Hankel from $\mathrm{ir}[0]$;
+> - **with feedthrough** ($D\ne0$): $\mathrm{ir}[0]=D,\ \mathrm{ir}[1]=CB$ → **drop
+>   $\mathrm{ir}[0]$ and feed from $\mathrm{ir}[1]$**, keeping $D=\mathrm{ir}[0]$ aside.
+>
+> `msvdreduce` / `blkhankel` assume the array you pass **starts at $CB$** (they treat
+> `ir[:,:,0]` as the first Hankel block). Pass the *full* IR of a $D\ne0$ system and the
+> reducer mistakes $D$ for $CB$ and recovers the wrong model — pass `ir[:, :, 1:]` and keep
+> `D = ir[:, :, 0]`.
+
 ## 2. The block Hankel matrix and its partial SVD
 
 Stack the Markov parameters into the block Hankel matrix (Yu eq 440):

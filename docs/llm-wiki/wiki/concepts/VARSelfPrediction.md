@@ -105,6 +105,77 @@ fit → AR coeffs CAⁿB → ar2ir → forward IR {h_n} → reduce → data pole
    → propagate the reduced state-space on the observed returns → ŷ
 ```
 
+## Practical case: ARX / MISO prediction (own-lags + exogenous inputs)
+
+The theory above is the **square self-prediction VAR** (`CAⁿB` = AR coefficients, inverted with
+`mimo_ar2ir`). A typical *prediction* model is narrower and needs much less machinery: a
+**univariate target** from **its own lagged returns/volume plus other instruments' lagged
+returns**. That is an **ARX** model (autoregressive + exogenous):
+
+$$y_t = \underbrace{\sum_k a_k\, y_{t-k}}_{\text{own AR (scalar)}}
+      + \underbrace{\sum_k b_k\, u_{t-k}}_{\text{exogenous: volume, other instruments}}
+      + \varepsilon_t,
+  \qquad H(z) = \frac{B(z)}{\mathcal A(z)},\ \ \mathcal A(z) = 1 - \textstyle\sum_k a_k z^{-k}.$$
+
+**For prediction — no inversion, no innovations.** The one-step predictor is the conditional
+expectation, and the innovation **drops out** of it (it is uncorrelated with the past, so
+`E[ε_t | past] = 0`):
+
+$$\hat y_t = \mathbb{E}[y_t\mid\text{past}] = \sum_k a_k y_{t-k} + \sum_k b_k u_{t-k}
+   + \underbrace{\mathbb{E}[\varepsilon_t\mid\text{past}]}_{=\,0}
+   = \sum_k a_k y_{t-k} + \sum_k b_k u_{t-k}.$$
+
+Every right-hand-side term is **observed** (past `y`, past `u`), so you predict by plugging in
+observed values — the fitted ARX regression **is** the optimal linear predictor. The innovation
+`ε_t = y_t − ŷ_t` is the prediction *error*: a byproduct known only after the fact, **never an
+input**. Own-lags don't reintroduce innovations because they're *observed data* — autoregression
+runs the **inverse direction** (data in → residual out), so you feed data, not innovations. And
+"no inversion" because you use the AR/ARX coefficients *directly*; you never form `1/𝒜(z)`.
+
+> **Two caveats — so "no inversion, no innovations" is precise, not over-broad:**
+> 1. **This is pure ARX.** With an **MA error term** (ARMAX, `… + Σ cⱼ ε_{t-j} + ε_t`), the
+>    predictor *does* use the **past innovations** `ε_{t-j}`, which you compute recursively as
+>    residuals — `E[ε_t|past]=0` still holds, but the lagged `ε_{t-j}` are no longer zero in the
+>    prediction. So "no innovations" holds for **ARX, not ARMAX**. Your model (own lags +
+>    exogenous, no MA term) is ARX.
+> 2. **"No inversion" is about *prediction*.** If you also want the **forward IR to reduce**, you
+>    *do* invert — but only the **scalar** `𝒜(z)` (own-AR) via the scalar `ar2ir`, then convolve
+>    with the exogenous numerator `bₖ`. That inversion is real and scalar, but **separate from
+>    prediction** (and never `mimo_ar2ir`).
+
+**The autoregression is scalar.** The only AR / invertible part is the target's *own* past:
+- **Data poles** = roots of the *scalar* `𝒜(z)` (own-AR) — read them off directly (or `eig` of
+  the scalar AR companion);
+- **Exogenous terms** (volume, other instruments) are the **numerator** `B(z)` — they add
+  **zeros**, observed inputs, *not poles*; no innovations, no inversion.
+
+So **`mimo_ar2ir` is not what an ARX model needs** — its multivariate (square `d×d`) AR
+structure isn't present. At most you touch the **scalar `ar2ir`**, and only to get the explicit
+input→target IR for reduction:
+`IR = bₖ * ar2ir(aₖ)` — scalar expansion of `1/𝒜(z)`, convolved with the exogenous numerator.
+
+| you want… | innovations? | `ar2ir`? |
+|---|---|---|
+| **predict** the target | no | no — regress on observed lags |
+| **data poles** | no | root-find the scalar `𝒜(z)` |
+| explicit **forward IR** (to reduce) | no | **scalar** `ar2ir` on `aₖ`, convolve with `bₖ` |
+| `mimo_ar2ir` / multivariate inversion | — | **never** for ARX (own-AR is scalar) |
+
+**"But a forward system needs innovations as inputs?"** — only the *self*-MA representation
+(innovation → data). A model predicting the target from *other observed series* is a forward
+**input→output** map driven by **observed inputs**, not innovations — so you skip both the
+innovation computation and `mimo_ar2ir`. Computing a univariate target's innovations would mean
+whitening it (`ε_t = y_t − Σ aₖ y_{t-k}`), which *is* the inverse filter you're trying to avoid.
+For returns (already nearly white) the inputs ≈ their own innovations anyway — feed raw lagged
+returns. And model **reduction works on a MISO IR (`p=1`)** exactly as on MIMO (the Hankel/SVD
+machinery is dimension-agnostic — verified).
+
+**When you DO need `mimo_ar2ir` / the full `d×d` VAR:** only if (a) you model all instruments
+jointly as a *square* self-prediction VAR (the inverse-filter framing of this page), or (b) you
+want the **structural / feedback-aware IRF** (response to an isolated innovation shock, tracing
+feedback). Plain prediction needs neither — the ARX regression already conditions on the
+observed inputs, with feedback absorbed implicitly into the coefficients.
+
 ## Connections (is this a known thing?)
 
 Yes — it is **linear prediction (LPC)**: `𝒜(z)` is the *prediction-error / whitening filter*,
