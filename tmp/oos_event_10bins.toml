@@ -1,0 +1,101 @@
+[common]
+expr_name = 'SPTM_MISO_OOS8_eventV5'
+field = 'mid'
+strats = 'Direction'
+universe = ['ES', 'NQ', 'DX']
+system = 'MISO'
+
+[data]
+input_path = '/home/yu.mu/yuresearch/data/'
+output_path = '/ccny5/dat/strat/sft/yu/cds/sp_tm/'
+start_date = '2000-01-04'
+end_date = '2019-12-30'
+input_file_name = '_beta_residuals.parq'
+beta_window = 252
+preprocess_shift = 10
+sp_ratio = 0.0005
+
+[preprocess]
+winsor_lookback = 48000
+std_lookback = 16000
+winsor_limits = [0.01, 0.99]
+winsor_shift_size = 5
+
+[missing]
+module_path = 'lib.sft_ym.missing.fit_missing'
+class = 'SimpleFitMissingDirection'
+
+[cv]
+module_path = 'lib.sft_ym.cds.backtesting.cross_validation'
+class = 'DateTimeRangeCrossValidatorExpendingWindow'
+
+[cv.kwargs]
+train_size = 1600
+test_size = 5
+
+[model]
+module_path = 'lib.sft_ym.cds.cds.models.three_sys_miso_vwap_target'
+class = 'ThreeSysMISO'
+
+[model.kwargs]
+a = 0
+b = 1
+enter_time = '07:45:00'
+exit_time = '10:05:00'
+numInputs = 4
+event_col = ['Nonfarm Payrolls', 'Initial Jobless Claims', 'GDP', 'CPI CHNG Index', 'Unemployment']
+features = ['ES', 'NQ', 'DX', 'ES_SIGNVOLUME']
+
+[hp]
+penalty = [1]
+numPoles1 = [2, 5, 10, 15, 20, 25, 30, 35, 40, 50]
+numPoles2 = [2]
+numPoles3 = [2, 5, 10, 15]
+phi1 = [1.0]
+phi2 = [1.0]
+phi3 = [1.0]
+phi1_step = [20]
+phi2_step = [20]
+phi3_step = [20]
+
+[sampler]
+module_path = 'lib.sft_ym.cds.backtesting.data.sampler'
+class = 'QMRGSampler'
+
+[sampler.kwargs]
+enter_time = '07:45:00'
+exit_time = '10:05:00'
+nbins = 10
+exeGap = '5min'
+enterVWAP = '10min'
+exitVWAP = '20min'
+insample_date = '2014-06-30'
+
+[metric]
+module_path = 'lib.sft_ym.cds.backtesting.metric'
+class = 'Sharpe'
+
+[cv_preprocess]
+module_path = 'lib.sft_ym.cds.backtesting.preprocess'
+class = 'ExpandingCVPreprocessWithVolume'
+
+[cv_preprocess.kwargs]
+limits = [0.05, 0.95]
+lookback = '120D'
+
+[port]
+module_path = 'lib.sft_ym.risk_model.mv_cvx'
+class = 'MVOWithFactorRisk'
+
+[port.kwargs]
+trdub = [2.34e6, 2.1e6, 2.1e6, 1.44e6, 1.14e6]
+trdlb = [0, 0, 0, 0, 0]
+posub = [96.6e6, 64.68e6, 64.68e6, 35.7e6, 42.84e6]
+poslb = [-96.6e6, -64.68e6, -64.68e6, -35.7e6, -42.84e6]
+c = [1e-4, 0.5e-4, 0.5e-4, 0.7e-4, 1e-4]
+fexpub = 0
+fexplb = 0
+S = 1e-4
+tau1 = 0.7
+tau2 = 0.1
+target_risk = 5e3

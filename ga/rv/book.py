@@ -158,11 +158,11 @@ class Book:
         timeList = [x.strftime('%H:%M:%S') for x in pd.date_range(pd.to_datetime('2017-01-01 '+self.startMultTime), pd.to_datetime('2017-01-01 '+self.endMultTime), freq='1S')]
         timeListMorn = [x.strftime('%H:%M:%S') for x in pd.date_range(pd.to_datetime('2017-01-01 09:30:00'), pd.to_datetime('2017-01-01 '+self.startMultTime), freq='1S')]
         # triangle curve
-        #self.timeBetaMultDict = dict(zip(timeList,np.append(np.linspace(params['startBetaMult'],1.5,np.sum([x <= '12:00:00' for x in timeList])), np.linspace(1.5, params['endBetaMult'],  <<<LINE TRUNCATED IN SOURCE PHOTO>>>
-        #self.timeLambdaMultDict = dict(zip(timeList,np.append(np.linspace(params['startLambdaMult'],0.5,np.sum([x <= '12:00:00' for x in timeList])), np.linspace(0.5, params['endLambdaM  <<<LINE TRUNCATED IN SOURCE PHOTO>>>
+        #self.timeBetaMultDict = dict(zip(timeList,np.append(np.linspace(params['startBetaMult'],1.5,np.sum([x <= '12:00:00' for x in timeList])), np.linspace(1.5, params['endBetaMult'],
+        #self.timeLambdaMultDict = dict(zip(timeList,np.append(np.linspace(params['startLambdaMult'],0.5,np.sum([x <= '12:00:00' for x in timeList])), np.linspace(0.5, params['endLambdaM
         # step curve
-        #self.timeBetaMultDict = dict(zip(timeList,np.append([1.]*1800 + [1.125]*1800 + [1.25]*1800 + [1.375]*1800 + [1.5]*1800, np.linspace(1.5, params['endBetaMult'], np.sum([x >= '12:  <<<LINE TRUNCATED IN SOURCE PHOTO>>>
-        #self.timeLambdaMultDict = dict(zip(timeList,np.append([1.]*1800 + [0.875]*1800 + [0.75]*1800 + [0.625]*1800 + [0.5]*1800, np.linspace(0.5, params['endLambdaMult'], np.sum([x >=  <<<LINE TRUNCATED IN SOURCE PHOTO>>>
+        #self.timeBetaMultDict = dict(zip(timeList,np.append([1.]*1800 + [1.125]*1800 + [1.25]*1800 + [1.375]*1800 + [1.5]*1800, np.linspace(1.5, params['endBetaMult'], np.sum([x >= '12:
+        #self.timeLambdaMultDict = dict(zip(timeList,np.append([1.]*1800 + [0.875]*1800 + [0.75]*1800 + [0.625]*1800 + [0.5]*1800, np.linspace(0.5, params['endLambdaMult'], np.sum([x >=
         # eod linear curve
         self.timeBetaMultDict = dict(zip(timeList,np.linspace(params['startBetaMult'],params['endBetaMult'],len(timeList))))
         if self.region == 'US' and params.get('morningBetaMult', 1.0) > 1.0:
@@ -236,7 +236,7 @@ class Book:
         self.volPosMult = max(min(12.0 / self.vixDict[curDate], 1.0), self.vixMinMult)
         #self.sizePosMult = max(min(self.sizeDict.get(curDate, 1) / 0.002, self.sizeMaxMult), self.sizeMinMult)
         #max(min(0.0025 / self.sizeDict.get(curDate, 1), self.sizeMaxMult), self.sizeMinMult)
-        #max(min(166.667*self.sizeDict.get(curDate, 0) + 1.0 - (1.0*(self.sizeDict.get(curDate, 0) > 0)*33.3*self.sizeDict.get(curDate, 0)), self.sizeMaxMult), self.sizeMinMul  <<<LINE TRUNCATED IN SOURCE PHOTO>>>
+        #max(min(166.667*self.sizeDict.get(curDate, 0) + 1.0 - (1.0*(self.sizeDict.get(curDate, 0) > 0)*33.3*self.sizeDict.get(curDate, 0)), self.sizeMaxMult), self.sizeMinMul
         #max(min(self.sizeDict.get(curDate, 1) / 0.002, self.sizeMaxMult), self.sizeMinMult)
         #
         if len(self.barraFactorNameList) > 0:

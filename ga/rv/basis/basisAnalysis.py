@@ -30,13 +30,6 @@ def sendEmail(msgBody):
     msg.attach(msgImage)
     #
     msg['Subject'] = 'Basis report for trade date: %s' % (curDate.strftime('%Y-%m-%d'))
-    # ------------------------------------------------------------------
-    # TRANSCRIPTION GAP: original lines 33-38 were not visible in the
-    # source images. Not reconstructed -- fill in from the original file.
-    # Judging by the surrounding code they set msg['From'] / msg['To'],
-    # opened the smtplib.SMTP connection as `s`, and sent the message,
-    # since `s` is referenced by s.quit() below and is otherwise undefined.
-    # ------------------------------------------------------------------
     s.quit()
 
 def showBasisStats(df, printGraphs):

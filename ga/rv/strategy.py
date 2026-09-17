@@ -5,11 +5,6 @@ module for individual Strategy class
 
 @author: john.casale
 '''
-# =====================================================================
-# Source Strategy.py is 585 lines (553 sloc). Fully transcribed except
-# lines 403-405 inside updateMarginMultiplier, marked inline below.
-# Nothing in that gap has been invented.
-# =====================================================================
 import numpy as np
 import pandas as pd
 import logging, datetime, math
@@ -405,10 +400,6 @@ class Strategy:
             curMarg *= (1 + (self.gamma2 * abs(self.curStratBeta) / (self.maxStratBeta * self.book.maxBetaMult)))
         else: # if alpha is in opposite direction as strategy beta, decrease margin
             curMarg *= (1 - (self.gamma1 * abs(self.curStratBeta) / (self.maxStratBeta * self.book.maxBetaMult)))
-        # ---- SOURCE LINES 403-405 NOT CAPTURED (fell between two photos) ----
-        # By analogy with the blocks above/below they are probably a
-        # `if curMarg < 0: return 0.0001` guard plus the next section comment,
-        # but that is a guess and has NOT been written in.
         if self.curStratRf * curSign * fut.riskFactor >= 0:
             curMarg *= (1 + (self.lambdaRf2 * abs(self.curStratRf) / (self.maxStratRiskFactor * self.book.maxRfMult)))
         else: # if alpha is in opposite direction as strat risk factor, decrease margin
