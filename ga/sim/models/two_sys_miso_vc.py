@@ -33,6 +33,8 @@ class TwoSysMISOVC:
         return pd.unique(df.index.time)
 
     def fit_train(self, train: pd.DataFrame) -> MISOTODVC:
+        tod_index = self.extract_tod(train)
+
         lambd1 = tib.poles_chebyshev_roots(self.numPoles1, a=self.a, b=self.b)
         lambd2 = tib.poles_chebyshev_roots(self.numPoles2, a=self.a, b=self.b)
         nulls1 = tib.mimo_standard_null_vectors(self.numPoles1, self.numInputs)
@@ -40,6 +42,8 @@ class TwoSysMISOVC:
         sys1 = mimo_system_matrices_biased(lambd1, nulls1.T)
         sys2 = mimo_system_matrices_biased(lambd2, nulls2.T)
 
+        # using online algorithm to estimate the coefficients to be consistent
+        # with the EDA analysis
         solver_inst = MISOTODVC(
             p1=self.numPoles1,
             p2=self.numPoles2,

@@ -71,11 +71,12 @@ class MISOTODVC(object):
         C1_norm = np.zeros(y.shape[0])
         C2_norm = np.zeros(y.shape[0])
 
+        # initialize the fit using linear regression
         lm2 = LinearRegression(fit_intercept=False)
         lm2.fit(r2_z2_df.values, r2_y_df.values)
 
         tv_coefs = calc_tv_coefficients(r1_z1_df.values, r1_y_df.values, self.sigma_i)
-        C1 = tv_coefs[-1].reshape(1, -1)
+        C1 = tv_coefs[-1, :].reshape(1, -1)
         C2 = lm2.coef_.reshape(1, -1)
 
         self.sys1 = sys1
@@ -87,8 +88,8 @@ class MISOTODVC(object):
         return yhat, yres, ybar, C1, C2, C1_norm, C2_norm
 
     def _predict(self, x: pd.DataFrame,
-                 z1: np.ndarray,
-                 z2: np.ndarray) -> np.ndarray:
+                 z1: pd.DataFrame,
+                 z2: pd.DataFrame) -> np.ndarray:
 
         yhat = np.zeros((x.shape[0], 1))
         Minv1 = sparse.linalg.inv(self.sys1.M)
@@ -97,13 +98,15 @@ class MISOTODVC(object):
         i = 0
         for ii, xii in x.iterrows():
             tod = xii.name.time()
+
             if str(tod) == self.tod_index[0]:
                 yhat[i] = (self.C1.dot(z1)).ravel()
             else:
                 yhat[i] = (self.C2.dot(z2)).ravel()
 
-            eps = x.loc[[ii]].values.reshape(-1, 1)
+            eps = x.loc[ii].values.reshape(-1, 1)
 
+            # update z
             zii = self.sys1.N.dot(self.sys1.Q.dot(z1))
             zii += self.sys1.U.dot(eps)
             z1 = Minv1.dot(zii)
